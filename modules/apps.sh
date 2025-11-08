@@ -6,6 +6,24 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
+install_homebrew() {
+    log_step "Instalación de Homebrew (Linuxbrew)"
+    
+    if command_exists brew; then
+        log_success "Homebrew ya está instalado."
+        return 0
+    fi
+    
+    log_info "Instalando Homebrew..."
+    # Instalar de forma no interactiva
+    if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
+        log_success "Homebrew instalado correctamente."
+    else
+        log_error "Falló la instalación de Homebrew."
+        return 1
+    fi
+}
+
 install_apps() {
     log_step "Instalación de Aplicaciones"
     
@@ -19,6 +37,9 @@ install_apps() {
         log_error "Error al instalar herramientas base"
         return 1
     }
+
+    # Instalar Homebrew
+    install_homebrew
     
     # Aplicaciones multimedia
     log_info "Instalando aplicaciones multimedia..."
