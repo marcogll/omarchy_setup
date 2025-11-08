@@ -1,0 +1,220 @@
+#!/usr/bin/env bash
+# ===============================================================
+# 🌀 Omarchy Setup Script — Configuración modular para Arch Linux
+# ===============================================================
+
+set -uo pipefail
+
+# Directorio del script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULES_DIR="${SCRIPT_DIR}/modules"
+REPO_BASE="https://raw.githubusercontent.com/marcogll/scripts_mg/refs/heads/main/omarchy_zsh_setup"
+
+# Verificar que los módulos existen
+if [[ ! -d "${MODULES_DIR}" ]] || [[ ! -f "${MODULES_DIR}/common.sh" ]]; then
+    echo -e "\033[0;31m✗ Error: Módulos no encontrados\033[0m"
+    echo ""
+    echo "Este script requiere que los módulos estén presentes localmente."
+    echo "Por favor, clona el repositorio completo:"
+    echo ""
+    echo "  git clone https://github.com/marcogll/scripts_mg.git"
+    echo "  cd scripts_mg/omarchy_zsh_setup"
+    echo "  ./omarchy-setup.sh"
+    echo ""
+    exit 1
+fi
+
+# Cargar funciones comunes
+source "${MODULES_DIR}/common.sh"
+
+# Función para mostrar el menú
+show_menu() {
+    clear
+    echo -e "${CYAN}╔════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${CYAN}║${NC}  ${BOLD}🌀 Omarchy Setup Script — Configuración Modular${NC}          ${CYAN}║${NC}"
+    echo -e "${CYAN}╚════════════════════════════════════════════════════════════╝${NC}"
+    echo ""
+    echo -e "${BOLD}Selecciona las opciones que deseas instalar:${NC}"
+    echo ""
+    echo -e "  ${GREEN}1)${NC} 📦 Instalar Aplicaciones (VS Code, Cursor, VLC, herramientas)"
+    echo -e "  ${GREEN}2)${NC} 🐚 Configurar Zsh (shell, plugins, configuración personalizada)"
+    echo -e "  ${GREEN}3)${NC} 🐳 Instalar Docker y Portainer"
+    echo -e "  ${GREEN}4)${NC} 🌐 Instalar ZeroTier"
+    echo -e "  ${GREEN}5)${NC} 🖨️  Configurar Impresoras (CUPS)"
+    echo -e "  ${GREEN}6)${NC} 🎬 Instalar DaVinci Resolve (Intel Edition)"
+    echo -e "  ${GREEN}7)${NC} 🔄 Actualizar Sistema"
+    echo -e "  ${GREEN}8)${NC} 🧹 Limpiar Paquetes Huérfanos"
+    echo -e "  ${GREEN}9)${NC} ✅ Instalar Todo (opciones 1-5)"
+    echo -e "  ${GREEN}0)${NC} 🚪 Salir"
+    echo ""
+    echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    echo -ne "${BOLD}Selecciona opción [0-9]: ${NC}"
+}
+
+# Función para ejecutar módulo
+run_module() {
+    local module_name=$1
+    local module_file="${MODULES_DIR}/${module_name}.sh"
+    
+    if [[ ! -f "${module_file}" ]]; then
+        log_error "Módulo ${module_name} no encontrado"
+        return 1
+    fi
+    
+    # Exportar REPO_BASE para que los módulos lo puedan usar
+    export REPO_BASE
+    
+    # Cargar y ejecutar el módulo
+    source "${module_file}"
+    
+    case "${module_name}" in
+        "apps")
+            install_apps
+            ;;
+        "zsh-config")
+            install_zsh
+            ;;
+        "docker")
+            install_docker
+            ;;
+        "zerotier")
+            install_zerotier
+            ;;
+        "printer")
+            install_printer
+            ;;
+        "davinci-resolve")
+            install_davinci_resolve
+            ;;
+        *)
+            log_error "Función no definida para el módulo ${module_name}"
+            return 1
+            ;;
+    esac
+}
+
+# Función para instalar todo
+install_all() {
+    log_step "Instalación Completa de Omarchy"
+    
+    local modules=("apps" "zsh-config" "docker" "zerotier" "printer")
+    local failed=()
+    
+    for module in "${modules[@]}"; do
+        log_info "Procesando módulo: ${module}"
+        if run_module "${module}"; then
+            log_success "Módulo ${module} completado"
+        else
+            log_error "Error en el módulo ${module}"
+            failed+=("${module}")
+        fi
+        echo ""
+    done
+    
+    if [[ ${#failed[@]} -eq 0 ]]; then
+        log_success "Todas las instalaciones se completaron correctamente"
+    else
+        log_warning "Algunos módulos fallaron: ${failed[*]}"
+    fi
+}
+
+# Función principal
+main() {
+    # Verificar que estamos en Arch Linux
+    if [[ ! -f /etc/arch-release ]]; then
+        log_error "Este script está diseñado para Arch Linux"
+        exit 1
+    fi
+    
+    # Verificar permisos de sudo
+    if ! sudo -n true 2>/dev/null; then
+        log_info "Este script requiere permisos de sudo"
+        sudo -v
+    fi
+    
+    # Mantener sudo activo en background
+    (while true; do
+        sudo -n true
+        sleep 60
+        kill -0 "$$" || exit
+    done 2>/dev/null) &
+    
+    # Bucle principal del menú
+    while true; do
+        show_menu
+        read -r choice
+        choice="${choice// /}"  # Eliminar espacios
+        
+        case "${choice}" in
+            1)
+                run_module "apps"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            2)
+                run_module "zsh-config"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            3)
+                run_module "docker"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            4)
+                run_module "zerotier"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            5)
+                run_module "printer"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            6)
+                log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads"
+                echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC}"
+                read -r confirm
+                if [[ "${confirm}" =~ ^[Ss]$ ]]; then
+                    run_module "davinci-resolve"
+                else
+                    log_info "Instalación cancelada"
+                fi
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            7)
+                update_system
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            8)
+                cleanup_orphans
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            9)
+                echo -ne "${BOLD}¿Instalar todas las opciones (1-5)? [s/N]: ${NC}"
+                read -r confirm
+                if [[ "${confirm}" =~ ^[Ss]$ ]]; then
+                    install_all
+                else
+                    log_info "Instalación cancelada"
+                fi
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            0)
+                log_info "Saliendo..."
+                exit 0
+                ;;
+            *)
+                log_error "Opción inválida. Presiona Enter para continuar..."
+                read -r
+                ;;
+        esac
+    done
+}
+
+# Ejecutar función principal
+main "$@"
