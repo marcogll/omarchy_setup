@@ -8,7 +8,7 @@ set -uo pipefail
 # Directorio del script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULES_DIR="${SCRIPT_DIR}/modules"
-REPO_BASE="https://raw.githubusercontent.com/marcogll/scripts_mg/refs/heads/main/omarchy_zsh_setup"
+REPO_BASE="https://raw.githubusercontent.com/marcogll/omarchy_setup/main"
 
 # Verificar que los módulos existen
 if [[ ! -d "${MODULES_DIR}" ]] || [[ ! -f "${MODULES_DIR}/common.sh" ]]; then
@@ -17,8 +17,8 @@ if [[ ! -d "${MODULES_DIR}" ]] || [[ ! -f "${MODULES_DIR}/common.sh" ]]; then
     echo "Este script requiere que los módulos estén presentes localmente."
     echo "Por favor, clona el repositorio completo:"
     echo ""
-    echo "  git clone https://github.com/marcogll/scripts_mg.git"
-    echo "  cd scripts_mg/omarchy_zsh_setup"
+    echo "  git clone https://github.com/marcogll/omarchy_setup.git"
+    echo "  cd omarchy_setup"
     echo "  ./omarchy-setup.sh"
     echo ""
     exit 1
@@ -26,6 +26,10 @@ fi
 
 # Cargar funciones comunes
 source "${MODULES_DIR}/common.sh"
+
+# Asegurar que los módulos son ejecutables (para ejecución individual)
+log_info "Verificando permisos de los módulos..."
+chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 
 # Función para mostrar el menú
 show_menu() {

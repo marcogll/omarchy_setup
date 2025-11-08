@@ -7,7 +7,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 # Usar REPO_BASE si está definido, sino usar el valor por defecto
-REPO_BASE="${REPO_BASE:-https://raw.githubusercontent.com/marcogll/scripts_mg/refs/heads/main/omarchy_zsh_setup}"
+REPO_BASE="${REPO_BASE:-https://raw.githubusercontent.com/marcogll/omarchy_setup/main}"
 
 install_zsh() {
     log_step "Configuración de Zsh"
@@ -73,4 +73,3 @@ EOF
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     install_zsh "$@"
 fi
-

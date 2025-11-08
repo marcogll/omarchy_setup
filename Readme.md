@@ -13,8 +13,8 @@ Script de instalación y configuración **modular** para **Arch Linux / Omarchy*
 
 ```bash
 # Clonar el repositorio
-git clone https://github.com/marcogll/scripts_mg.git
-cd scripts_mg/omarchy_zsh_setup
+git clone https://github.com/marcogll/omarchy_setup.git
+cd omarchy_setup
 
 # Ejecutar el script maestro
 ./omarchy-setup.sh
@@ -118,9 +118,9 @@ Cada módulo puede ejecutarse de forma independiente:
 **Nota**: El script requiere que los módulos estén presentes localmente. Se recomienda clonar el repositorio completo.
 
 ```bash
-# Clonar repositorio
-git clone https://github.com/marcogll/scripts_mg.git
-cd scripts_mg/omarchy_zsh_setup
+# Clonar el repositorio
+git clone https://github.com/marcogll/omarchy_setup.git
+cd omarchy_setup
 ./omarchy-setup.sh
 ```
 
