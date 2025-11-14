@@ -45,10 +45,11 @@ show_menu() {
     echo -e "  ${GREEN}3)${NC} 🐳 Instalar Docker y Portainer"
     echo -e "  ${GREEN}4)${NC} 🌐 Instalar ZeroTier"
     echo -e "  ${GREEN}5)${NC} 🖨️  Configurar Impresoras (CUPS)"
-    echo -e "  ${GREEN}6)${NC} 🎬 Instalar DaVinci Resolve (Intel Edition)"
-    echo -e "  ${GREEN}7)${NC} 🔄 Actualizar Sistema"
-    echo -e "  ${GREEN}8)${NC} 🧹 Limpiar Paquetes Huérfanos"
-    echo -e "  ${GREEN}9)${NC} ✅ Instalar Todo (opciones 1-5)"
+    echo -e "  ${GREEN}6)${NC} 🖱️ Instalar Tema de Cursor (Bibata)"
+    echo -e "  ${GREEN}7)${NC} 🎬 Instalar DaVinci Resolve (Intel Edition)"
+    echo -e "  ${GREEN}8)${NC} 🔄 Actualizar Sistema"
+    echo -e "  ${GREEN}9)${NC} 🧹 Limpiar Paquetes Huérfanos"
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (opciones 1-6)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -87,6 +88,9 @@ run_module() {
         "printer")
             install_printer
             ;;
+        "mouse_cursor")
+            install_mouse_cursor
+            ;;
         "davinci-resolve")
             install_davinci_resolve
             ;;
@@ -101,7 +105,7 @@ run_module() {
 install_all() {
     log_step "Instalación Completa de Omarchy"
     
-    local modules=("apps" "zsh-config" "docker" "zerotier" "printer")
+    local modules=("apps" "zsh-config" "docker" "zerotier" "printer" "mouse_cursor")
     local failed=()
     
     for module in "${modules[@]}"; do
@@ -147,7 +151,7 @@ main() {
     while true; do
         show_menu
         read -r choice
-        choice="${choice// /}"  # Eliminar espacios
+        choice=$(echo "${choice// /}" | tr '[:lower:]' '[:upper:]') # Eliminar espacios y convertir a mayúsculas
         
         case "${choice}" in
             1)
@@ -176,10 +180,20 @@ main() {
                 read -p "Presiona Enter para continuar..."
                 ;;
             6)
+                run_module "mouse_cursor"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            7)
+                run_module "mouse_cursor"
+                echo ""
+                read -p "Presiona Enter para continuar..."
+                ;;
+            7)
                 log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads"
                 echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC}"
                 read -r confirm
-                if [[ "${confirm}" =~ ^[Ss]$ ]]; then
+                if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
                     run_module "davinci-resolve"
                 else
                     log_info "Instalación cancelada"
@@ -187,17 +201,17 @@ main() {
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            7)
+            8)
                 update_system
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            8)
+            9)
                 cleanup_orphans
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            9)
+            A)
                 echo -ne "${BOLD}¿Instalar todas las opciones (1-5)? [s/N]: ${NC}"
                 read -r confirm
                 if [[ "${confirm}" =~ ^[Ss]$ ]]; then

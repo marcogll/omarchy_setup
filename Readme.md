@@ -27,12 +27,13 @@ omarchy_zsh_setup/
 ├── omarchy-setup.sh          # Script maestro con menú interactivo
 ├── modules/
 │   ├── common.sh              # Funciones comunes (colores, logging, etc.)
-│   ├── apps.sh                # Instalación de aplicaciones
+│   ├── apps.sh                # Instalación de aplicacionesç
 │   ├── zsh-config.sh          # Configuración de Zsh
 │   ├── docker.sh              # Docker y Portainer
 │   ├── zerotier.sh            # ZeroTier VPN
 │   ├── printer.sh             # Configuración de impresoras (CUPS)
-│   └── davinci-resolve.sh     # DaVinci Resolve (Intel Edition)
+│   ├── davinci-resolve.sh     # DaVinci Resolve (Intel Edition)
+│   └── mouse_cursor.sh        # Tema de cursor Bibata
 └── Readme.md
 ```
 
