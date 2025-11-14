@@ -3,7 +3,7 @@
 # 🌀 Omarchy Setup Script — Configuración modular para Arch Linux
 # ===============================================================
 
-set -uo pipefail
+set -u
 
 # Directorio del script
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -31,6 +31,52 @@ source "${MODULES_DIR}/common.sh"
 log_info "Verificando permisos de los módulos..."
 chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 
+# --- Funciones de UI Mejorada (Spinner y Barra de Progreso) ---
+
+SPINNER_PID=
+
+# Inicia una animación de spinner en segundo plano
+# Uso: start_spinner "Mensaje..."
+start_spinner() {
+    (
+        local chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+        while :; do
+            for (( i=0; i<${#chars}; i++ )); do
+                echo -ne "${CYAN}${chars:$i:1}${NC} $1\r"
+                sleep 0.1
+            done
+        done
+    ) &
+    SPINNER_PID=$!
+    # Ocultar cursor
+    tput civis
+}
+
+# Detiene el spinner y muestra un mensaje de finalización
+# Uso: stop_spinner $? "Mensaje de éxito" "Mensaje de error"
+stop_spinner() {
+    local exit_code=$1
+    local success_msg=$2
+    local error_msg=${3:-"Ocurrió un error"}
+    
+    if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+        kill "$SPINNER_PID" &>/dev/null
+        wait "$SPINNER_PID" &>/dev/null
+    fi
+    
+    # Limpiar la línea del spinner
+    echo -ne "\r\033[K"
+    
+    if [[ $exit_code -eq 0 ]]; then
+        log_success "$success_msg"
+    else
+        log_error "$error_msg"
+    fi
+    # Restaurar cursor
+    tput cnorm
+    SPINNER_PID=
+}
+
 # Función para mostrar el menú
 show_menu() {
     clear
@@ -40,15 +86,16 @@ show_menu() {
     echo ""
     echo -e "${BOLD}Selecciona las opciones que deseas instalar:${NC}"
     echo ""
-    echo -e "  ${GREEN}1)${NC} 📦 Instalar Aplicaciones (VS Code, Cursor, VLC, herramientas)"
-    echo -e "  ${GREEN}2)${NC} 🐚 Configurar Zsh (shell, plugins, configuración personalizada)"
+    echo -e "  ${GREEN}1)${NC} 📦 Instalar Aplicaciones (VS Code, VLC, drivers, etc.)"
+    echo -e "  ${GREEN}2)${NC} 🐚 Configurar Zsh (shell, plugins, config)"
     echo -e "  ${GREEN}3)${NC} 🐳 Instalar Docker y Portainer"
     echo -e "  ${GREEN}4)${NC} 🌐 Instalar ZeroTier"
     echo -e "  ${GREEN}5)${NC} 🖨️  Configurar Impresoras (CUPS)"
     echo -e "  ${GREEN}6)${NC} 🖱️ Instalar Tema de Cursor (Bibata)"
-    echo -e "  ${GREEN}7)${NC} 🎬 Instalar DaVinci Resolve (Intel Edition)"
-    echo -e "  ${GREEN}8)${NC} 🔄 Actualizar Sistema"
-    echo -e "  ${GREEN}9)${NC} 🧹 Limpiar Paquetes Huérfanos"
+    echo -e "  ${GREEN}7)${NC} 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)"
+    echo -e "  ${GREEN}8)${NC} 🎬 Instalar DaVinci Resolve (Intel Edition)"
+    echo -e "  ${GREEN}9)${NC} 🔄 Actualizar Sistema"
+    echo -e "  ${GREEN}C)${NC} 🧹 Limpiar Paquetes Huérfanos"
     echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (opciones 1-6)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
@@ -93,6 +140,9 @@ run_module() {
             ;;
         "davinci-resolve")
             install_davinci_resolve
+            ;;
+        "icon_manager")
+            bash "${module_file}"
             ;;
         *)
             log_error "Función no definida para el módulo ${module_name}"
@@ -148,6 +198,10 @@ main() {
     done 2>/dev/null) &
     
     # Bucle principal del menú
+    # Exportar funciones para que los submódulos las puedan usar
+    export -f start_spinner
+    export -f stop_spinner
+
     while true; do
         show_menu
         read -r choice
@@ -155,45 +209,59 @@ main() {
         
         case "${choice}" in
             1)
+                start_spinner "Instalando aplicaciones..."
                 run_module "apps"
+                stop_spinner $? "Módulo de aplicaciones finalizado."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             2)
+                start_spinner "Configurando Zsh..."
                 run_module "zsh-config"
+                stop_spinner $? "Configuración de Zsh finalizada."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             3)
+                start_spinner "Instalando Docker..."
                 run_module "docker"
+                stop_spinner $? "Instalación de Docker finalizada."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             4)
+                start_spinner "Instalando ZeroTier..."
                 run_module "zerotier"
+                stop_spinner $? "Instalación de ZeroTier finalizada."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             5)
+                start_spinner "Configurando impresoras..."
                 run_module "printer"
+                stop_spinner $? "Configuración de impresoras finalizada."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             6)
+                start_spinner "Instalando tema de cursor..."
                 run_module "mouse_cursor"
+                stop_spinner $? "Tema de cursor instalado."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             7)
-                run_module "mouse_cursor"
+                # Este módulo es interactivo, no usamos spinner aquí
+                run_module "icon_manager"
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            7)
-                log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads"
-                echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC}"
+            8)
+                log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads/"
+                echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC} "
                 read -r confirm
                 if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
+                    # El spinner se maneja dentro del módulo de DaVinci
                     run_module "davinci-resolve"
                 else
                     log_info "Instalación cancelada"
@@ -201,18 +269,22 @@ main() {
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            8)
+            9)
+                start_spinner "Actualizando el sistema..."
                 update_system
+                stop_spinner $? "Sistema actualizado."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
-            9)
+            C)
+                start_spinner "Limpiando paquetes huérfanos..."
                 cleanup_orphans
+                stop_spinner $? "Limpieza finalizada."
                 echo ""
                 read -p "Presiona Enter para continuar..."
                 ;;
             A)
-                echo -ne "${BOLD}¿Instalar todas las opciones (1-5)? [s/N]: ${NC}"
+                echo -ne "${BOLD}¿Instalar todas las opciones (1-6)? [s/N]: ${NC} "
                 read -r confirm
                 if [[ "${confirm}" =~ ^[Ss]$ ]]; then
                     install_all

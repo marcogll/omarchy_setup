@@ -47,12 +47,14 @@ install_zsh() {
     
     # Instalar Zsh y plugins
     log_info "Instalando Zsh y complementos..."
+    # El spinner se inicia desde el script principal, aquí solo ejecutamos el comando
     sudo pacman -S --noconfirm --needed \
         zsh zsh-completions zsh-syntax-highlighting zsh-autosuggestions || {
         log_error "Error al instalar Zsh"
         return 1
     }
     
+    # No es necesario un spinner aquí, es muy rápido
     # Descargar configuración personalizada
     log_info "Descargando configuración de Zsh desde GitHub..."
     if curl -fsSL "${REPO_BASE}/.zshrc" -o ~/.zshrc; then

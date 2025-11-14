@@ -32,8 +32,9 @@ omarchy_zsh_setup/
 │   ├── docker.sh              # Docker y Portainer
 │   ├── zerotier.sh            # ZeroTier VPN
 │   ├── printer.sh             # Configuración de impresoras (CUPS)
+│   ├── mouse_cursor.sh        # Tema de cursor Bibata
+│   ├── icon_manager.sh        # Gestor de temas de iconos
 │   ├── davinci-resolve.sh     # DaVinci Resolve (Intel Edition)
-│   └── mouse_cursor.sh        # Tema de cursor Bibata
 └── Readme.md
 ```
 
@@ -63,18 +64,10 @@ Selecciona las opciones que deseas instalar:
 ## 📋 Módulos Disponibles
 
 ### 1. 📦 Aplicaciones (`apps.sh`)
-- Herramientas base (git, curl, wget, etc.)
-- VS Code
-- Cursor (desde AUR)
-- VLC y plugins multimedia
-- Herramientas de desarrollo
-- Configuración de VLC como reproductor predeterminado
+- Editores como VS Code y Cursor (desde AUR)
 
 ### 2. 🐚 Zsh (`zsh-config.sh`)
-- Instalación de Zsh y plugins
-- Descarga de configuración `.zshrc` desde GitHub
-- Configuración como shell predeterminada
-- Plugins: syntax-highlighting, autosuggestions
+- Modifica `.bashrc` para lanzar Zsh automáticamente
 
 ### 3. 🐳 Docker (`docker.sh`)
 - Instalación de Docker y Docker Compose
@@ -90,13 +83,15 @@ Selecciona las opciones que deseas instalar:
 ### 5. 🖨️ Impresoras (`printer.sh`)
 - Instalación de CUPS
 - Drivers comunes de impresora
-- Configuración de servicios
-- Interfaz web en http://localhost:631
 
-### 6. 🎬 DaVinci Resolve (`davinci-resolve.sh`)
-- Instalación de DaVinci Resolve para Intel GPU
-- Configuración de OpenCL
-- Requiere ZIP de instalación en `~/Downloads`
+### 6. 🖱️ Tema de Cursor (`mouse_cursor.sh`)
+- Instala el tema de cursor `Bibata-Modern-Ice`.
+- Configura el cursor para Hyprland y aplicaciones GTK.
+
+### 7. 🎨 Gestor de Iconos (`icon_manager.sh`)
+- Menú interactivo para instalar y cambiar entre temas de iconos como Papirus, Tela y Candy.
+
+### 8. 🎬 DaVinci Resolve (`davinci-resolve.sh`)
 - Configuración de librerías y wrapper
 
 ## 🔧 Ejecutar Módulos Individualmente
@@ -160,12 +155,9 @@ cd omarchy_setup
   - intel-compute-runtime (OpenCL para Intel)
 
 ### 🐚 Zsh
-- Shell Zsh con plugins (syntax-highlighting, autosuggestions)
-- Configuración personalizada desde GitHub
-- Configuración como shell predeterminada
+- Modifica `.bashrc` para lanzar Zsh automáticamente
 
 ### 🐳 Docker
-- Docker y Docker Compose
 - Portainer (interfaz web de gestión)
 - Usuario agregado al grupo docker
 - Servicios habilitados y configurados
@@ -662,9 +654,9 @@ X)
   - Docker y Portainer (docker.sh)
   - ZeroTier (zerotier.sh)
   - Impresoras CUPS (printer.sh)
+  - Tema de Cursor (mouse_cursor.sh)
   - DaVinci Resolve (davinci-resolve.sh)
-- 🔧 **Fácil de extender**: Agrega nuevos módulos fácilmente
-- 🧹 **Limpieza**: Eliminado archivo duplicado davinci_resolve_intel.sh
+  - Gestor de Iconos (icon_manager.sh)
 
 ### v2.8.1 (2025-11-02)
 - Versión unificada con estética Catppuccin
@@ -696,11 +688,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/marcogll/scripts_mg/main/oma
 
 ## 📝 Notas importantes
 
-- **Módulos locales requeridos**: El script requiere que los módulos estén presentes localmente. Clona el repositorio completo.
-- **Permisos sudo**: El script requiere permisos de sudo para instalar paquetes y configurar servicios.
-- **Reinicio recomendado**: Después de instalar servicios (Docker, ZeroTier, CUPS), se recomienda reiniciar o al menos cerrar sesión para aplicar cambios de grupos.
-- **Shell por defecto**: El módulo de Zsh verificará y cambiará el shell predeterminado si es necesario.
-- **DaVinci Resolve**: Requiere el ZIP de instalación en `~/Downloads` antes de ejecutar el módulo.
+- **Shell por defecto**: El módulo de Zsh modifica `.bashrc` para que las terminales nuevas usen Zsh.
 
 ## 🚀 Próximos Pasos
 
