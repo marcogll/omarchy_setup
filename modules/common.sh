@@ -67,10 +67,16 @@ check_and_install_pkg() {
     # pacman -Q es más fiable para paquetes individuales.
     if ! pacman -Q "$pkg_name" &>/dev/null; then
         log_info "Instalando ${pkg_name}..."
-        sudo pacman -S --noconfirm --needed "$pkg_name" || log_warning "No se pudo instalar ${pkg_name}."
+        if sudo pacman -S --noconfirm --needed "$pkg_name"; then
+            return 0
+        else
+            log_warning "No se pudo instalar ${pkg_name}."
+            return 1
+        fi
     else
         log_info "${pkg_name} ya está instalado."
     fi
+    return 0
 }
 
 
@@ -91,6 +97,42 @@ ensure_aur_helper() {
         echo "yay"
         return 0
     fi
+}
+
+aur_install_packages() {
+    local packages=("$@")
+    if [[ ${#packages[@]} -eq 0 ]]; then
+        return 0
+    fi
+
+    local helper="${AUR_HELPER_CMD:-}"
+    if [[ -z "$helper" ]]; then
+        helper="$(ensure_aur_helper)" || helper=""
+    fi
+
+    if [[ -z "$helper" ]]; then
+        log_error "No se pudo determinar un helper de AUR disponible."
+        return 1
+    fi
+
+    local -a base_flags=(--noconfirm --needed --noeditmenu --nodiffmenu --nocleanmenu)
+    AUR_HELPER_CMD="$helper"
+    local status=0
+    case "$helper" in
+        yay)
+            "$helper" -S "${base_flags[@]}" --answerdiff None --answerclean All --answeredit None --mflags "--noconfirm" --cleanafter "${packages[@]}"
+            status=$?
+            ;;
+        paru)
+            "$helper" -S "${base_flags[@]}" --skipreview --cleanafter --mflags "--noconfirm" "${packages[@]}"
+            status=$?
+            ;;
+        *)
+            log_error "Helper AUR desconocido: ${helper}"
+            return 1
+            ;;
+    esac
+    return $status
 }
 
 # Función para actualizar sistema

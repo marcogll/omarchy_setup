@@ -8,50 +8,64 @@ source "${SCRIPT_DIR}/common.sh"
 
 install_printer() {
     log_step "Configuración de Impresoras (CUPS)"
-    
-    # Instalar CUPS y drivers comunes
-    log_info "Instalando CUPS y drivers de impresora..."
-    sudo pacman -S --noconfirm --needed \
-        cups cups-pdf \
-        ghostscript gsfonts \
-        gutenprint foomatic-db-engine foomatic-db foomatic-db-ppds foomatic-db-nonfree-ppds foomatic-db-nonfree \
-        system-config-printer \
-        avahi || {
-        log_error "Error al instalar CUPS"
-        return 1
-    }
-    
-    # Instalar drivers específicos desde AUR (para Epson)
-    log_info "Buscando drivers de Epson en AUR..."
-    local AUR_DRIVERS=("epson-inkjet-printer-escpr" "epson-inkjet-printer-escpr2")
-    local AUR_HELPER
-    AUR_HELPER=$(ensure_aur_helper)
 
-    if [[ -n "$AUR_HELPER" ]]; then
-        log_info "Instalando drivers de Epson con ${AUR_HELPER}..."
-        "$AUR_HELPER" -S --noconfirm --needed "${AUR_DRIVERS[@]}" || log_warning "No se pudieron instalar todos los drivers de Epson desde AUR."
+    local target_user="${SUDO_USER:-$USER}"
+
+    log_info "Instalando CUPS y paquetes base..."
+    local base_pkgs=(
+        cups cups-pdf cups-filters
+        ghostscript gsfonts
+        gutenprint
+        foomatic-db-engine foomatic-db foomatic-db-ppds
+        foomatic-db-nonfree foomatic-db-nonfree-ppds
+        system-config-printer
+        avahi nss-mdns
+    )
+    local pkg_failed=false
+    for pkg in "${base_pkgs[@]}"; do
+        if ! check_and_install_pkg "$pkg"; then
+            pkg_failed=true
+        fi
+    done
+    if [[ "$pkg_failed" == true ]]; then
+        log_warning "Algunos paquetes base no pudieron instalarse. Revisa los mensajes anteriores."
+    fi
+
+    log_info "Instalando drivers para Epson (ESC/P-R)..."
+    local aur_drivers=("epson-inkjet-printer-escpr" "epson-inkjet-printer-escpr2" "epson-printer-utility")
+    if ! aur_install_packages "${aur_drivers[@]}"; then
+        log_warning "No se pudieron instalar todos los drivers de Epson de forma automática. Revisa 'epson-inkjet-printer-escpr2' y 'epson-printer-utility' manualmente."
+    fi
+
+    log_info "Verificando servicios de impresión..."
+    local services=("cups.service" "avahi-daemon.service")
+    for svc in "${services[@]}"; do
+        if sudo systemctl is-enabled "$svc" &>/dev/null; then
+            log_info "${svc} ya está habilitado."
+        else
+            sudo systemctl enable "$svc"
+            log_success "${svc} habilitado."
+        fi
+
+        if sudo systemctl is-active "$svc" &>/dev/null; then
+            log_info "${svc} ya está en ejecución."
+        else
+            sudo systemctl start "$svc"
+            log_success "${svc} iniciado."
+        fi
+    done
+
+    if ! id -nG "$target_user" | grep -qw lp; then
+        log_info "Agregando usuario ${target_user} al grupo lp..."
+        sudo usermod -aG lp "$target_user"
     else
-        log_error "No se encontró un ayudante de AUR (yay, paru). No se pueden instalar los drivers de Epson."
-        # No retornamos error, el resto de la configuración puede continuar
+        log_info "El usuario ${target_user} ya pertenece al grupo lp."
     fi
 
-    # Habilitar y iniciar servicios
-    log_info "Habilitando servicios de impresora..."
-    sudo systemctl enable cups.service
-    sudo systemctl enable avahi-daemon.service
-    sudo systemctl start cups.service
-    sudo systemctl start avahi-daemon.service
-    
-    # Agregar usuario al grupo lp (si no está ya)
-    if ! groups "$USER" | grep -q lp; then
-        log_info "Agregando usuario al grupo lp..."
-        sudo usermod -aG lp "$USER"
-    fi
-    
-    log_success "CUPS instalado y configurado"
-    log_info "Accede a la interfaz web de CUPS en: http://localhost:631"
-    log_info "O usa: system-config-printer para configurar impresoras"
-    
+    log_success "Dependencias de impresión instaladas."
+    log_info "Añade tu impresora Epson L4150 desde http://localhost:631 o con 'system-config-printer'."
+    log_info "El módulo no configura impresoras automáticamente; solo deja listas las dependencias."
+
     return 0
 }
 

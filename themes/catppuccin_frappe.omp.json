@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/schema.json",
+  "final_space": true,
+  "console_title_template": "{{ .Folder }}",
+  "blocks": [
+    {
+      "type": "prompt",
+      "alignment": "left",
+      "segments": [
+        {
+          "type": "text",
+          "style": "plain",
+          "foreground": "#c6d0f5",
+          "background": "#303446",
+          "properties": {
+            "text": "omarchy"
+          }
+        },
+        {
+          "type": "path",
+          "style": "plain",
+          "foreground": "#303446",
+          "background": "#81c8be",
+          "properties": {
+            "style": "folder",
+            "enable_hyperlink": true
+          }
+        },
+        {
+          "type": "git",
+          "style": "plain",
+          "foreground": "#303446",
+          "background": "#f4b8e4",
+          "properties": {
+            "branch_icon": "",
+            "display_status": true,
+            "display_upstream_icon": true,
+            "template": "git {{ .HEAD }}{{ if or (.Working.Changed) (.Staging.Changed) }} *{{ end }}"
+          }
+        }
+      ]
+    },
+    {
+      "type": "prompt",
+      "alignment": "right",
+      "segments": [
+        {
+          "type": "executiontime",
+          "style": "plain",
+          "foreground": "#c6d0f5",
+          "background": "#626880",
+          "properties": {
+            "template": "{{ if gt .Milliseconds 500 }}time {{ .FormattedMs }}{{ end }}"
+          }
+        },
+        {
+          "type": "time",
+          "style": "plain",
+          "foreground": "#303446",
+          "background": "#e5c890",
+          "properties": {
+            "time_format": "15:04"
+          }
+        }
+      ]
+    }
+  ]
+}

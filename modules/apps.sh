@@ -116,8 +116,6 @@ run_module_main() {
         log_warning "Algunos paquetes OpenCL no se pudieron instalar"
     }
 
-    AUR_HELPER=$(ensure_aur_helper)
-
     if [[ ! -f /etc/OpenCL/vendors/intel.icd ]] && [[ -f /usr/lib/intel-opencl/libigdrcl.so ]]; then
         log_info "Configurando OpenCL para Intel..."
         sudo mkdir -p /etc/OpenCL/vendors
@@ -139,19 +137,10 @@ run_module_main() {
     fi
     
     log_info "Instalando aplicaciones desde AUR..."
-    
-    for pkg in "${AUR_PACKAGES[@]}"; do
-        log_info "Instalando ${pkg}..."
-        if [ "$AUR_HELPER" = "yay" ]; then
-            yay -S --noconfirm "$pkg" || {
-                log_warning "No se pudo instalar ${pkg} desde AUR"
-            }
-        elif [ "$AUR_HELPER" = "paru" ]; then
-            paru -S --noconfirm "$pkg" || {
-                log_warning "No se pudo instalar ${pkg} desde AUR"
-            }
-        fi
-    done
+    log_warning "Este paso puede tardar varios minutos; qt5-webengine y teamviewer descargan y compilan bastante."
+    if ! aur_install_packages "${AUR_PACKAGES[@]}"; then
+        log_warning "Algunas aplicaciones de AUR no se pudieron instalar automáticamente."
+    fi
     
     # Configurar servicios
     log_info "Configurando servicios..."

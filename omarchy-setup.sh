@@ -34,22 +34,31 @@ chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 # --- Funciones de UI Mejorada (Spinner y Barra de Progreso) ---
 
 SPINNER_PID=
+SPINNER_DEVICE_ACTIVE=
 
 # Inicia una animación de spinner en segundo plano
 # Uso: start_spinner "Mensaje..."
 start_spinner() {
+    local message="$1"
+    local device="/dev/tty"
+    if [[ ! -w "$device" ]]; then
+        device="/dev/null"
+    fi
+    SPINNER_DEVICE_ACTIVE="$device"
+
     (
         local chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
+        local dev="$device"
         while :; do
             for (( i=0; i<${#chars}; i++ )); do
-                echo -ne "${CYAN}${chars:$i:1}${NC} $1\r"
+                printf '\r\033[K%s %s' "${CYAN}${chars:$i:1}${NC}" "$message" >"$dev"
                 sleep 0.1
             done
         done
     ) &
     SPINNER_PID=$!
-    # Ocultar cursor
-    tput civis
+    # Ocultar cursor en la terminal, si es posible
+    printf '\033[?25l' >"$device" 2>/dev/null || true
 }
 
 # Detiene el spinner y muestra un mensaje de finalización
@@ -58,14 +67,18 @@ stop_spinner() {
     local exit_code=$1
     local success_msg=$2
     local error_msg=${3:-"Ocurrió un error"}
-    
+    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
+    if [[ ! -w "$device" ]]; then
+        device="/dev/null"
+    fi
+
     if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
         kill "$SPINNER_PID" &>/dev/null
         wait "$SPINNER_PID" &>/dev/null
     fi
     
     # Limpiar la línea del spinner
-    echo -ne "\r\033[K"
+    printf '\r\033[K' >"$device"
     
     if [[ $exit_code -eq 0 ]]; then
         log_success "$success_msg"
@@ -73,8 +86,9 @@ stop_spinner() {
         log_error "$error_msg"
     fi
     # Restaurar cursor
-    tput cnorm
+    printf '\033[?25h' >"$device" 2>/dev/null || true
     SPINNER_PID=
+    SPINNER_DEVICE_ACTIVE=
 }
 
 # --- Definición de Módulos ---

@@ -120,14 +120,12 @@ install_davinci_resolve() {
     stop_spinner $? "Dependencias de Pacman instaladas."
 
     # Instalar dependencias de AUR
-    local AUR_HELPER
-    AUR_HELPER=$(ensure_aur_helper)
-    if [[ -n "$AUR_HELPER" ]]; then
-        start_spinner "Instalando dependencias de AUR con ${AUR_HELPER}..."
-        "$AUR_HELPER" -S --needed --noconfirm "${AUR_DEPS[@]}" &> /dev/null
-        stop_spinner $? "Dependencias de AUR instaladas."
+    start_spinner "Instalando dependencias de AUR..."
+    if aur_install_packages "${AUR_DEPS[@]}"; then
+        stop_spinner 0 "Dependencias de AUR instaladas."
     else
-        log_error "No se encontró un ayudante de AUR (yay, paru). No se pueden instalar paquetes como 'intel-compute-runtime'."
+        stop_spinner 1 "Falló la instalación de dependencias de AUR."
+        log_error "No se pudieron instalar paquetes como 'intel-compute-runtime' desde AUR."
         return 1
     fi
 
