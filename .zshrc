@@ -43,15 +43,15 @@ zstyle ':completion:*' menu select
   source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
 
 # --- Oh My Posh --------------------------------------------------------------
-# Asegúrate de que Oh My Posh esté instalado y el tema 'catppuccin.omp.json'
+# Asegúrate de que Oh My Posh esté instalado y el tema 'catppuccin_frappe.omp.json'
 # esté en ~/.poshthemes/
 if command -v oh-my-posh >/dev/null 2>&1; then
-  if [ -f ~/.poshthemes/catppuccin.omp.json ]; then
-    eval "$(oh-my-posh init zsh --config ~/.poshthemes/catppuccin.omp.json)"
+  if [ -f ~/.poshthemes/catppuccin_frappe.omp.json ]; then
+    eval "$(oh-my-posh init zsh --config ~/.poshthemes/catppuccin_frappe.omp.json)"
   else
-    # Fallback si el tema Catppuccin no se encuentra
+    # Fallback si el tema Catppuccin Frappe no se encuentra
     eval "$(oh-my-posh init zsh)"
-    echo "Advertencia: Tema Catppuccin para Oh My Posh no encontrado en ~/.poshthemes/. Usando el tema por defecto."
+    echo "Advertencia: Tema Catppuccin Frappe para Oh My Posh no encontrado en ~/.poshthemes/. Usando el tema por defecto."
   fi
 fi
 
@@ -354,10 +354,10 @@ alias ssh-github='ssh -T git@github.com'       # Test GitHub connection
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
   
-  # Alias para compatibilidad con el comportamiento tradicional
-  alias cd='z'
-  alias cdi='zi'                               # Interactive mode
-  alias zz='z -'                               # Ir al directorio anterior
+  # zoxide se integra con 'cd'. Para usarlo de forma explícita o interactiva,
+  # puedes usar 'z' y 'zi'.
+  alias zz='z -'   # Ir al directorio anterior
+  alias zi='zi'    # Modo interactivo
 else
   echo "Advertencia: zoxide no está instalado. Instálalo para usar 'z', 'zi', 'zz'."
 fi

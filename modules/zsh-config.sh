@@ -1,107 +1,107 @@
 #!/usr/bin/env bash
-# ===============================================================
-# zsh-config.sh - Configuración de Zsh y shell
-# ===============================================================
+#
+# Módulo para configurar Zsh, Oh My Zsh, Oh My Posh y dependencias.
+#
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
-
-# Usar REPO_BASE si está definido, sino usar el valor por defecto
-REPO_BASE="${REPO_BASE:-https://raw.githubusercontent.com/marcogll/omarchy_setup/main}"
-
-configure_bashrc_to_launch_zsh() {
-    local bashrc_file="$HOME/.bashrc"
-    local block_marker="# OMARCHY: AUTO-LAUNCH ZSH"
-
-    if [[ -f "$bashrc_file" ]] && grep -qF "$block_marker" "$bashrc_file"; then
-        log_success ".bashrc ya está configurado para lanzar Zsh."
-        return 0
-    fi
-
-    log_info "Configurando .bashrc para lanzar Zsh automáticamente..."
-
-    # Crear copia de seguridad
-    if [[ -f "$bashrc_file" ]]; then
-        cp "$bashrc_file" "${bashrc_file}.bak_$(date +%F_%T)"
-        log_info "Copia de seguridad de .bashrc creada en ${bashrc_file}.bak_..."
-    fi
-
-    # Añadir el bloque de código a .bashrc
-    cat >> "$bashrc_file" << 'EOF'
-
-# OMARCHY: AUTO-LAUNCH ZSH
-# Lanzar Zsh automáticamente si no estamos ya en Zsh
-if [ -t 1 ] && [ -z "$ZSH_VERSION" ] && command -v zsh &>/dev/null; then
-    # Inicializar Homebrew si existe antes de cambiar de shell
-    if [ -f "/home/linuxbrew/.linuxbrew/bin/brew" ]; then
-        eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"
-    fi
-    exec zsh
+# Asegurarse de que las funciones comunes están cargadas
+SCRIPT_DIR_MODULE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [[ -f "${SCRIPT_DIR_MODULE}/common.sh" ]]; then
+    source "${SCRIPT_DIR_MODULE}/common.sh"
+else
+    echo "Error: common.sh no encontrado."
+    exit 1
 fi
-EOF
-    log_success ".bashrc modificado para iniciar Zsh."
-}
 
 install_zsh() {
-    log_step "Configuración de Zsh"
-    
-    # Instalar Zsh y plugins
-    log_info "Instalando Zsh y complementos..."
-    # El spinner se inicia desde el script principal, aquí solo ejecutamos el comando
-    sudo pacman -S --noconfirm --needed \
-        zsh zsh-completions zsh-syntax-highlighting zsh-autosuggestions || {
-        log_error "Error al instalar Zsh"
-        return 1
-    }
-    
-    # No es necesario un spinner aquí, es muy rápido
-    # Descargar configuración personalizada
-    log_info "Descargando configuración de Zsh desde GitHub..."
-    if curl -fsSL "${REPO_BASE}/.zshrc" -o ~/.zshrc; then
-        # Añadir configuración de Homebrew si está instalado
-        if [[ -x "/home/linuxbrew/.linuxbrew/bin/brew" ]]; then
-            log_info "Añadiendo configuración de Homebrew a .zshrc..."
-            echo '' >> ~/.zshrc
-            echo '# Homebrew' >> ~/.zshrc
-            echo 'eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"' >> ~/.zshrc
+    log_step "Configuración Completa de Zsh"
+
+    # --- 1. Instalar paquetes necesarios desde Pacman ---
+    log_info "Instalando Zsh y herramientas esenciales..."
+    local pkgs=(
+        zsh 
+        zsh-completions 
+        zsh-syntax-highlighting 
+        zsh-autosuggestions
+        oh-my-posh          # Para el prompt
+        zoxide              # Navegación inteligente
+        fastfetch           # Información del sistema
+        yt-dlp              # Descarga de videos/audio
+        nerd-fonts          # Paquete de fuentes con iconos
+        unrar p7zip lsof    # Dependencias para funciones en .zshrc
+    )
+    for pkg in "${pkgs[@]}"; do
+        check_and_install_pkg "$pkg"
+    done
+
+    # --- 2. Instalar Oh My Zsh (si no existe) ---
+    if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
+        log_info "Instalando Oh My Zsh..."
+        # Usar RUNZSH=no para evitar que inicie un nuevo shell y CHSH=no para no cambiar el shell aún
+        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc
+        if [[ $? -ne 0 ]]; then
+            log_error "Falló la instalación de Oh My Zsh."
+            return 1
         fi
-        log_success "Configuración de Zsh descargada"
     else
-        log_warning "No se pudo descargar .zshrc desde GitHub"
-        log_info "Creando configuración básica de Zsh..."
-        cat > ~/.zshrc << 'EOF'
-# Zsh básico
-autoload -U compinit
-compinit
-
-# Plugins
-source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
-
-# Historial
-HISTFILE=~/.zsh_history
-HISTSIZE=10000
-SAVEHIST=10000
-setopt SHARE_HISTORY
-setopt HIST_IGNORE_DUPS
-
-# Aliases útiles
-alias ll='ls -lah'
-alias la='ls -A'
-alias l='ls -CF'
-alias ..='cd ..'
-alias ...='cd ../..'
-EOF
+        log_info "Oh My Zsh ya está instalado."
     fi
-    
-    # Modificar .bashrc para que lance zsh
-    configure_bashrc_to_launch_zsh
 
-    log_success "Configuración de Zsh completada"
+    # --- 3. Descargar y configurar el .zshrc personalizado ---
+    log_info "Descargando configuración .zshrc desde el repositorio..."
+    if curl -fsSL "${REPO_BASE}/.zshrc" -o "$HOME/.zshrc.omarchy-tmp"; then
+        mv "$HOME/.zshrc.omarchy-tmp" "$HOME/.zshrc"
+        log_success "Archivo .zshrc actualizado."
+    else
+        log_error "No se pudo descargar el archivo .zshrc."
+        return 1
+    fi
+
+    # --- 4. Descargar el tema de Oh My Posh ---
+    log_info "Configurando tema de Oh My Posh (Catppuccin Frappe)..."
+    local posh_themes_dir="$HOME/.poshthemes"
+    local theme_file="$posh_themes_dir/catppuccin_frappe.omp.json"
+    mkdir -p "$posh_themes_dir"
+    
+    if curl -fsSL "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_frappe.omp.json" -o "$theme_file"; then
+        log_success "Tema Catppuccin Frappe descargado en $theme_file"
+    else
+        log_error "No se pudo descargar el tema de Oh My Posh."
+        # No retornamos error, el .zshrc tiene un fallback
+    fi
+
+    # --- 5. Cambiar el shell por defecto a Zsh para el usuario actual ---
+    if [[ "$(basename "$SHELL")" != "zsh" ]]; then
+        log_info "Cambiando el shell por defecto a Zsh..."
+        # chsh requiere la contraseña del usuario
+        if chsh -s "$(which zsh)"; then
+            log_success "Shell cambiado a Zsh. El cambio será efectivo en el próximo inicio de sesión."
+        else
+            log_error "No se pudo cambiar el shell. Por favor, ejecute 'chsh -s $(which zsh)' manualmente."
+        fi
+    else
+        log_info "Zsh ya es el shell por defecto."
+    fi
+
+    # --- 6. Configurar .bashrc para lanzar Zsh (para sesiones no interactivas) ---
+    local bashrc_zsh_loader='
+# Launch Zsh
+if [ -t 1 ]; then
+  exec zsh
+fi'
+    if [[ -f "$HOME/.bashrc" ]] && ! grep -q "exec zsh" "$HOME/.bashrc"; then
+        log_info "Configurando .bashrc para iniciar Zsh automáticamente..."
+        echo "$bashrc_zsh_loader" >> "$HOME/.bashrc"
+    else
+        log_info ".bashrc ya está configurado para lanzar Zsh."
+    fi
+
+    # --- 7. Mensaje final ---
+    echo ""
+    log_warning "¡IMPORTANTE! Para que los iconos se vean bien, debes configurar tu terminal:"
+    log_info "1. Abre las Preferencias de tu terminal."
+    log_info "2. Ve a la sección de Perfil -> Apariencia/Texto."
+    log_info "3. Cambia la fuente a una 'Nerd Font' (ej: FiraCode Nerd Font, MesloLGS NF)."
+    log_info "4. Cierra y vuelve a abrir la terminal para ver todos los cambios."
+
     return 0
 }
-
-# Ejecutar si se llama directamente
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    install_zsh "$@"
-fi

@@ -181,6 +181,11 @@ install_all() {
 
 # Función principal
 main() {
+    # Limpieza al salir: detener el spinner y restaurar el cursor
+    trap 'stop_spinner 1 "Script interrumpido." >/dev/null 2>&1; exit 1' INT TERM
+    # Limpieza final al salir normalmente
+    trap 'tput cnorm' EXIT
+
     # Verificar que estamos en Arch Linux
     if [[ ! -f /etc/arch-release ]]; then
         log_error "Este script está diseñado para Arch Linux"
