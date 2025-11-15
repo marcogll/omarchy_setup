@@ -1,17 +1,16 @@
-#!/bin/bash
-#
+#!/usr/bin/env bash
 # icon_manager.sh (v2)
 #
 # Un script de gestión para instalar y cambiar entre diferentes temas de iconos
 # en un entorno Hyprland/Omarchy. Incluye temas base y personalizaciones.
 #
 
+set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 # --- Variables Globales ---
 AUTOSTART_FILE="$HOME/.config/hypr/autostart.conf"
-TEMP_DIR="/tmp/icon_theme_setup"
 ICON_DIR_USER="$HOME/.local/share/icons"
 
 # --- Funciones de Utilidad ---
@@ -59,70 +58,82 @@ apply_theme() {
 
 # Función auxiliar para asegurar que el tema base Papirus esté instalado
 ensure_papirus_installed() {
+    local temp_dir="$1"
     if [[ ! -d "$ICON_DIR_USER/Papirus-Dark" ]]; then
         log_info "El tema base Papirus no está instalado. Instalándolo ahora..."
-        git clone --depth 1 https://github.com/PapirusDevelopment/papirus-icon-theme.git "$TEMP_DIR/papirus"
-        "$TEMP_DIR/papirus/install.sh"
+        git clone --depth 1 https://github.com/PapirusDevelopment/papirus-icon-theme.git "$temp_dir/papirus"
+        "$temp_dir/papirus/install.sh"
     else
         log_info "El tema base Papirus ya está instalado."
     fi
 }
 
 # Función para instalar y aplicar el tema Tela Nord (usado como default)
-install_tela_nord() {
+# Argumento 1 (opcional): Directorio temporal a utilizar.
+set_default_icon_theme() {
     local theme_name="Tela-nord-dark"
-    echo "--- Gestionando Tela Nord Icons ---"
+    local temp_dir_param="${1:-}" # Aceptar directorio temporal como parámetro
+    log_info "Gestionando el tema de iconos por defecto '$theme_name'..."
+
     if [[ -d "$ICON_DIR_USER/$theme_name" ]]; then
-        log_info "El tema ya está instalado."
+        log_info "El tema '$theme_name' ya está instalado."
     else
-        log_info "Instalando el tema..."
-        git clone --depth 1 https://github.com/vinceliuice/Tela-icon-theme.git "$TEMP_DIR/tela"
-        "$TEMP_DIR/tela/install.sh" -c nord
+        log_info "Instalando el tema '$theme_name'..."
+        # Si no se pasa un directorio, crear uno propio y limpiarlo.
+        # Si se pasa, usarlo sin limpiarlo (la función llamadora se encarga).
+        local temp_dir="${temp_dir_param}"
+        [[ -z "$temp_dir" ]] && temp_dir=$(mktemp -d)
+
+        git clone --depth 1 https://github.com/vinceliuice/Tela-icon-theme.git "$temp_dir/tela"
+        "$temp_dir/tela/install.sh" -c nord
+
+        [[ -z "$temp_dir_param" ]] && rm -rf "$temp_dir"
     fi
     apply_theme "$theme_name"
 }
 
-install_papirus() {
+install_papirus_standard() {
     local theme_name="Papirus-Dark"
+    local temp_dir="$1"
     echo "--- Gestionando Papirus Icons (Estándar) ---"
-    ensure_papirus_installed
+    ensure_papirus_installed "$temp_dir"
     # Si el usuario quiere el Papirus estándar, restauramos los colores por si acaso
     if command_exists papirus-folders; then
-        "$ICON_DIR_USER/papirus-folders" --default --theme "$theme_name"
+        papirus-folders --default --theme "$theme_name"
     fi
     apply_theme "$theme_name"
 }
 
 install_candy() {
     local theme_name="Candy"
+    local temp_dir="$1"
     echo "--- Gestionando Candy Icons ---"
     if [[ -d "$ICON_DIR_USER/$theme_name" ]]; then
         log_info "El tema ya está instalado."
     else
         log_info "Instalando el tema..."
-        git clone --depth 1 https://github.com/EliverLara/candy-icons.git "$TEMP_DIR/candy"
-        "$TEMP_DIR/candy/install.sh"
+        git clone --depth 1 https://github.com/EliverLara/candy-icons.git "$temp_dir/candy"
+        "$temp_dir/candy/install.sh"
     fi
     apply_theme "$theme_name"
 }
 
 install_papirus_catppuccin() {
     local theme_name="Papirus-Dark"
-    # Catppuccin tiene 4 variantes: latte, frappe, macchiato, mocha. Usaremos Mocha.
     local catppuccin_flavor="mocha"
+    local temp_dir="$1"
 
     echo "--- Gestionando Papirus Icons con colores Catppuccin ($catppuccin_flavor) ---"
     
-    # 1. Asegurarse de que el tema base Papirus exista
-    ensure_papirus_installed
+    ensure_papirus_installed "$temp_dir"
 
     # 2. Descargar y ejecutar el script de personalización
     log_info "Descargando y aplicando el colorizador Catppuccin..."
-    git clone --depth 1 https://github.com/catppuccin/papirus-folders.git "$TEMP_DIR/papirus-folders-catppuccin"
-    chmod +x "$TEMP_DIR/papirus-folders-catppuccin/papirus-folders"
+    git clone --depth 1 https://github.com/catppuccin/papirus-folders.git "$temp_dir/papirus-folders-catppuccin"
+    chmod +x "$temp_dir/papirus-folders-catppuccin/papirus-folders"
     
     # Ejecutar el script para cambiar el color de las carpetas
-    "$TEMP_DIR/papirus-folders-catppuccin/papirus-folders" -C "catppuccin-${catppuccin_flavor}" --theme "$theme_name"
+    "$temp_dir/papirus-folders-catppuccin/papirus-folders" -C "catppuccin-${catppuccin_flavor}" --theme "$theme_name"
 
     # 3. Aplicar el tema (el nombre sigue siendo Papirus-Dark, pero los iconos han cambiado)
     apply_theme "$theme_name"
@@ -135,6 +146,10 @@ run_module_main() {
     if ! check_deps; then
         return 1
     fi
+
+    local temp_dir
+    temp_dir=$(mktemp -d)
+    trap 'rm -rf -- "$temp_dir"' EXIT
 
     while true; do
         clear
@@ -152,34 +167,26 @@ run_module_main() {
         echo
         read -p "Tu elección: " choice
 
-        # Limpiar directorio temporal antes de cada operación
-        rm -rf "$TEMP_DIR"
-        mkdir -p "$TEMP_DIR"
+        # Limpiar el directorio temporal para la nueva operación
+        rm -rf -- "$temp_dir"/*
 
         case $choice in
-            1) install_tela_nord ;;
-            2) install_papirus ;;
-            3) install_papirus_catppuccin ;;
-            4) install_candy ;;
+            1) set_default_icon_theme "$temp_dir" ;;
+            2) install_papirus_standard "$temp_dir" ;;
+            3) install_papirus_catppuccin "$temp_dir" ;;
+            4) install_candy "$temp_dir" ;;
             [qQ])
                 log_info "Volviendo al menú principal."
                 break
                 ;;
             *) log_error "Opción no válida. Inténtalo de nuevo." ;;
         esac
-
-        echo
-        read -p "Presiona Enter para continuar..." || true
+        if [[ ! "$choice" =~ [qQ] ]]; then
+            echo
+            read -p "Presiona Enter para continuar..."
+        fi
     done
-    # Limpieza final
-    rm -rf "$TEMP_DIR"
     return 0
-}
-
-# La función set_default_icon_theme es un alias para mantener la compatibilidad
-# con otros scripts como hyprland-config.sh
-set_default_icon_theme() {
-    install_tela_nord
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
