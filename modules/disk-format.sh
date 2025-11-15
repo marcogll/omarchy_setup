@@ -1,24 +1,26 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Módulo: Formateo de discos (FAT32 / exFAT / NTFS / ext4)
+# ===============================================================
+# disk-format.sh - Formateo de discos (FAT32 / exFAT / NTFS / ext4)
+# ===============================================================
 
-format_disk() {
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/common.sh"
+
+run_module_main() {
     log_step "Módulo: Formateo de discos (FAT32 / exFAT / NTFS / ext4)"
 
     # Dependencias
     local PKGS=(dosfstools exfatprogs ntfs-3g e2fsprogs)
-    local missing=()
-    for p in "${PKGS[@]}"; do
-        if ! pacman -Qi "$p" &>/dev/null; then
-            missing+=("$p")
-        fi
-    done
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        log_info "Instalando dependencias: ${missing[*]}"
-        sudo pacman -Sy --needed --noconfirm "${missing[@]}" || {
-            log_error "No se pudieron instalar: ${missing[*]}"
+    if ! pacman -T "${PKGS[@]}" &>/dev/null; then
+        log_info "Instalando dependencias necesarias..."
+        start_spinner "Instalando: ${PKGS[*]}..."
+        if sudo pacman -S --needed --noconfirm "${PKGS[@]}"; then
+            stop_spinner 0 "Dependencias instaladas."
+        else
+            stop_spinner 1 "No se pudieron instalar las dependencias."
             return 1
-        }
+        fi
     fi
 
     echo
@@ -87,4 +89,7 @@ format_disk() {
     fi
 }
 
-export -f format_disk
+# Ejecutar si se llama directamente
+if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
+    run_module_main "$@"
+fi

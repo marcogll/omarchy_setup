@@ -49,15 +49,17 @@ Al ejecutar `./omarchy-setup.sh`, verás un menú con las siguientes opciones:
 
 Selecciona las opciones que deseas instalar:
 
-  1) 📦 Instalar Aplicaciones (VS Code, Cursor, VLC, herramientas)
-  2) 🐚 Configurar Zsh (shell, plugins, configuración personalizada)
+  1) 📦 Instalar Aplicaciones (VS Code, VLC, drivers, etc.)
+  2) 🐚 Configurar Zsh (shell, plugins, config)
   3) 🐳 Instalar Docker y Portainer
-  4) 🌐 Instalar ZeroTier
+  4) 🌐 Instalar ZeroTier VPN
   5) 🖨️  Configurar Impresoras (CUPS)
-  6) 🎬 Instalar DaVinci Resolve (Intel Edition)
-  7) 🔄 Actualizar Sistema
-  8) 🧹 Limpiar Paquetes Huérfanos
-  9) ✅ Instalar Todo (opciones 1-5)
+  6) 🖱️ Instalar Tema de Cursor (Bibata)
+  7) 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)
+  8) 🎬 Instalar DaVinci Resolve (Intel Edition)
+  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6)
+  F) 💾 Formatear un Disco (FAT32, exFAT, NTFS, ext4)
+  H) 🎨 Instalar Configuración de Hyprland
   0) 🚪 Salir
 ```
 
@@ -621,24 +623,28 @@ fi
 
 2. Agrega el módulo al menú en `omarchy-setup.sh`:
 
+Dentro del script `omarchy-setup.sh`, localiza el array asociativo `MODULES` y añade una nueva línea.
+
 ```bash
-# En la función show_menu(), agrega:
-echo -e "  ${GREEN}X)${NC} 📦 Descripción del módulo"
-
-# En el case statement, agrega:
-X)
-    run_module "nombre-modulo"
-    echo ""
-    read -p "Presiona Enter para continuar..."
-    ;;
-
-# En la función run_module(), agrega:
-"nombre-modulo")
-    install_nombre_modulo
-    ;;
+# --- Definición de Módulos ---
+# Clave: Opción del menú
+# Valor: "Nombre del Fichero;Función Principal;Descripción;Tipo (bg/fg)"
+declare -A MODULES
+MODULES=(
+    ["1"]="apps;run_module_main;📦 Instalar Aplicaciones;bg"
+    # ... otros módulos ...
+    ["N"]="nombre-modulo;install_nombre_modulo;🚀 Mi Nuevo Módulo;fg"
+)
 ```
 
-3. Si quieres incluirlo en "Instalar Todo", agrégalo al array `modules` en la función `install_all()`.
+- **Clave (`"N"`):** La tecla que el usuario presionará en el menú.
+- **Valor:** Una cadena de texto con 4 partes separadas por punto y coma (`;`):
+    1.  `nombre-modulo`: El nombre del fichero `.sh` sin la extensión.
+    2.  `install_nombre_modulo`: La función dentro de ese fichero que se debe ejecutar.
+    3.  `🚀 Mi Nuevo Módulo`: La descripción que aparecerá en el menú.
+    4.  `fg` o `bg`: `fg` (foreground) para scripts interactivos, `bg` (background) para tareas que pueden usar un spinner.
+
+3. Si quieres incluirlo en la opción "Instalar Todo", añade la clave del menú (en este caso, `"N"`) al array `INSTALL_ALL_CHOICES`.
 
 ---
 
