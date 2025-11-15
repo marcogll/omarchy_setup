@@ -57,11 +57,13 @@ Selecciona las opciones que deseas instalar:
   6) 🖱️ Instalar Tema de Cursor (Bibata)
   7) 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)
   8) 🎬 Instalar DaVinci Resolve (Intel Edition)
-  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6)
+  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 8)
   F) 💾 Formatear un Disco (FAT32, exFAT, NTFS, ext4)
   H) 🎨 Instalar Configuración de Hyprland
   0) 🚪 Salir
 ```
+
+> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, 3, 4, 5, 6 y 8. Antes de usarla asegúrate de haber descargado manualmente el instalador de DaVinci Resolve (ZIP) en `~/Downloads/`.
 
 ## 📋 Módulos Disponibles
 
@@ -407,7 +409,7 @@ $HOME/
 │       ├── zsh-autosuggestions/
 │       └── zsh-syntax-highlighting/
 ├── .poshthemes/                   # Temas Oh My Posh
-│   └── catppuccin.omp.json        # Tema Catppuccin Frappe
+│   └── catppuccin_frappe.omp.json # Tema Catppuccin Frappe
 ├── .zsh_functions/                # Funciones personalizadas (directorio creado)
 ├── Videos/YouTube/                # Descargas de yt-dlp
 │   ├── Music/                     # Audios MP3
@@ -526,7 +528,7 @@ which oh-my-posh
 oh-my-posh version
 
 # Verificar que el tema existe
-ls ~/.poshthemes/catppuccin.omp.json
+ls ~/.poshthemes/catppuccin_frappe.omp.json
 
 # Verificar que tienes una Nerd Font instalada
 # (El script NO instala fuentes automáticamente)

@@ -13,13 +13,13 @@ run_module_main() {
     log_step "Instalación de Configuración de Hyprland"
 
     # --- 1. Copiar archivos de configuración ---
-    # La configuración de Hyprland debe estar en una carpeta 'hypr' en la raíz del repo
-    local source_dir="${SCRIPT_DIR}/../hypr"
+    # La configuración de Hyprland debe estar en una carpeta 'hypr_config' en la raíz del repo
+    local source_dir="${SCRIPT_DIR}/../hypr_config"
     local dest_dir="$HOME/.config/hypr"
 
     if [[ ! -d "$source_dir" ]]; then
-        log_error "No se encontró el directorio de configuración 'hypr' en la raíz del repositorio."
-        log_info "Asegúrate de que la carpeta con tu configuración se llame 'hypr'."
+        log_error "No se encontró el directorio de configuración 'hypr_config' en la raíz del repositorio."
+        log_info "Asegúrate de que la carpeta con tu configuración se llame 'hypr_config'."
         return 1
     fi
 

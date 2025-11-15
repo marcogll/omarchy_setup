@@ -26,7 +26,6 @@ install_zsh() {
         zoxide              # Navegación inteligente
         fastfetch           # Información del sistema
         yt-dlp              # Descarga de videos/audio
-        nerd-fonts          # Paquete de fuentes con iconos
         unrar p7zip lsof    # Dependencias para funciones en .zshrc
     )
     for pkg in "${pkgs[@]}"; do
@@ -105,6 +104,7 @@ fi'
     log_info "2. Ve a la sección de Perfil -> Apariencia/Texto."
     log_info "3. Cambia la fuente a una 'Nerd Font' (ej: FiraCode Nerd Font, MesloLGS NF)."
     log_info "4. Cierra y vuelve a abrir la terminal para ver todos los cambios."
+    log_warning "Recuerda instalar manualmente una Nerd Font; el script no instala fuentes."
 
     return 0
 }

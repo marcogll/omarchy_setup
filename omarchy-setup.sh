@@ -115,7 +115,7 @@ show_menu() {
         echo -e "  ${GREEN}${key})${NC} ${description}"
     done | sort -V
 
-    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6)"
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 8)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -154,6 +154,34 @@ run_module() {
     return $?
 }
 
+# Función para ejecutar un módulo con lógica de reintento
+# Intenta ejecutar un módulo. Si falla, lo reintenta una vez más.
+# Devuelve 0 si tiene éxito en cualquier intento, 1 si falla en ambos.
+run_module_with_retry() {
+    local choice=$1
+    local max_intentos=2
+    local intento_actual=1
+
+    while [ $intento_actual -le $max_intentos ]; do
+        run_module "$choice"
+        local estado_salida=$?
+
+        if [ $estado_salida -eq 0 ]; then
+            return 0 # Éxito, salimos de la función
+        fi
+
+        log_warning "El módulo falló en el intento $intento_actual (código: $estado_salida)."
+        if [ $intento_actual -lt $max_intentos ]; then
+            log_info "Reintentando en 3 segundos..."
+            sleep 3
+        fi
+        ((intento_actual++))
+    done
+
+    log_error "El módulo falló después de $max_intentos intentos."
+    return 1 # Falla definitiva
+}
+
 # Función para instalar todo
 install_all() {
     log_step "Instalación Completa de Omarchy"
@@ -170,13 +198,13 @@ install_all() {
         # Ejecutar con spinner para tareas de fondo (bg)
         if [[ "$type" == "bg" ]]; then
             start_spinner "Ejecutando: ${description#* }..."
-            if run_module "${choice}"; then
+            if run_module_with_retry "${choice}"; then
                 stop_spinner 0 "Módulo '${description}' finalizado."
             else
                 stop_spinner 1 "Error en el módulo '${description}'."
                 failed+=("${module_file}")
             fi
-        else # Ejecutar sin spinner para tareas interactivas (fg)
+        else # Ejecutar sin spinner para tareas interactivas (fg) y sin reintento
             if ! run_module "${choice}"; then
                 log_error "Error en el módulo '${description}'."
                 failed+=("${module_file}")
@@ -212,10 +240,11 @@ main() {
     fi
     
     # Mantener sudo activo en background
+    local parent_pid=$$
     (while true; do
         sudo -n true
         sleep 60
-        kill -0 "$$" || exit
+        kill -0 "$parent_pid" || exit
     done 2>/dev/null) &
     
     # Bucle principal del menú
@@ -245,10 +274,14 @@ main() {
 
             if [[ "$type" == "bg" ]]; then
                 spinner_msg="${description#* }..." # "Instalar Apps..."
-                start_spinner "Ejecutando: ${spinner_msg}"
-                run_module "$choice"
-                stop_spinner $? "Módulo '${description}' finalizado."
+                start_spinner "${spinner_msg}"
+                if run_module_with_retry "$choice"; then
+                    stop_spinner 0 "Módulo '${description}' finalizado."
+                else
+                    stop_spinner 1 "Error en el módulo '${description}'."
+                fi
             else # 'fg'
+                log_info "Ejecutando módulo interactivo: ${description}"
                 run_module "$choice"
             fi
 
@@ -256,10 +289,9 @@ main() {
             read -p "Presiona Enter para continuar..."
 
         elif [[ "$choice" == "A" ]]; then
-                echo -ne "${BOLD}¿Instalar todas las opciones (1, 2, 3, 4, 5, 6)? [s/N]: ${NC} "
-                log_warning "NOTA: La opción 'Instalar Todo' incluye DaVinci Resolve, que requiere"
-                log_warning "que hayas descargado el archivo ZIP manualmente en tu carpeta ~/Downloads/."
-                echo -ne "${BOLD}¿Confirmas que has hecho esto y deseas continuar? [s/N]: ${NC} "
+                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6 y 8."
+                log_warning "DaVinci Resolve requiere que el ZIP de instalación esté en ~/Downloads/."
+                echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
                 if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
                     install_all
@@ -281,8 +313,10 @@ main() {
 # Ejecutar función principal
 
 # --- Redirección de logs ---
+# Crear el directorio de logs si no existe
+mkdir -p "${SCRIPT_DIR}/logs"
 # Crear un nombre de archivo de log con la fecha y hora
-LOG_FILE="${SCRIPT_DIR}/omarchy-setup-$(date +%F_%H-%M-%S).log"
+LOG_FILE="${SCRIPT_DIR}/logs/omarchy-setup-$(date +%F_%H-%M-%S).log"
 
 # Ejecutar la función principal y redirigir toda la salida (stdout y stderr)
 # al archivo de log, mientras también se muestra en la terminal.
