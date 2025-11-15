@@ -38,7 +38,7 @@ run_module_main() {
         yt-dlp
     )
     local PACMAN_NETWORK=(
-        filezilla telegram-desktop scrcpy
+        filezilla telegram-desktop scrcpy speedtest-cli
     )
     local PACMAN_INTEL_GFX=(
         mesa vulkan-intel lib32-mesa lib32-vulkan-intel
@@ -53,6 +53,12 @@ run_module_main() {
         "visual-studio-code-bin" "cursor-bin" "keyd" "fragments"
         "logiops" "ltunify" "teamviewer" "intel-compute-runtime"
     )
+
+    log_info "Actualizando el sistema para evitar conflictos de dependencias..."
+    sudo pacman -Syu --noconfirm || {
+        log_warning "No se pudo completar la actualización del sistema. Pueden ocurrir errores de dependencias."
+        # Continuamos de todos modos, pero con una advertencia.
+    }
 
     log_info "Instalando herramientas base..."
     sudo pacman -S --noconfirm --needed "${PACMAN_BASE[@]}" || {
