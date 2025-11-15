@@ -48,7 +48,10 @@ install_zsh() {
 
     # --- 3. Descargar y configurar el .zshrc personalizado ---
     log_info "Descargando configuración .zshrc desde el repositorio..."
-    if curl -fsSL "${REPO_BASE}/.zshrc" -o "$HOME/.zshrc.omarchy-tmp"; then
+    # Crear copia de seguridad antes de sobrescribir
+    backup_file "$HOME/.zshrc" || return 1
+
+    if curl -fsSL "${REPO_BASE}/.zshrc" -o "$HOME/.zshrc.omarchy-tmp" && [[ -s "$HOME/.zshrc.omarchy-tmp" ]]; then
         mv "$HOME/.zshrc.omarchy-tmp" "$HOME/.zshrc"
         log_success "Archivo .zshrc actualizado."
     else

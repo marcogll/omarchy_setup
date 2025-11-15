@@ -86,7 +86,7 @@ declare -A MODULES
 MODULES=(
     ["1"]="apps;run_module_main;📦 Instalar Aplicaciones (VS Code, VLC, drivers, etc.);bg"
     ["2"]="zsh-config;install_zsh;🐚 Configurar Zsh (shell, plugins, config);bg"
-    ["3"]="docker;install_docker;🐳 Instalar Docker y Portainer;bg"
+    ["3"]="docker;install_docker;🐳 Instalar Docker y Portainer;fg"
     ["4"]="zerotier;install_zerotier;🌐 Instalar ZeroTier VPN;bg"
     ["5"]="printer;install_printer;🖨️  Configurar Impresoras (CUPS);bg"
     ["6"]="mouse_cursor;install_mouse_cursor;🖱️ Instalar Tema de Cursor (Bibata);bg"
@@ -97,7 +97,7 @@ MODULES=(
 )
 
 # Módulos a incluir en la opción "Instalar Todo"
-INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6")
+INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "8")
 
 # Función para mostrar el menú
 show_menu() {
@@ -161,13 +161,26 @@ install_all() {
     local failed=()
     
     for choice in "${INSTALL_ALL_CHOICES[@]}"; do
-        IFS=';' read -r module_file _ description _ <<< "${MODULES[$choice]}"
-        log_info "Ejecutando: ${description}"
-        if run_module "${choice}"; then
-            log_success "Módulo ${module_file} completado"
-        else
-            log_error "Error en el módulo ${module_file}"
-            failed+=("${module_file}")
+        IFS=';' read -r module_file _ description type <<< "${MODULES[$choice]}"
+        
+        # Separador visual para cada módulo
+        echo -e "\n${MAGENTA}────────────────────────────────────────────────────────────${NC}"
+        log_step "Iniciando Módulo: ${description}"
+        
+        # Ejecutar con spinner para tareas de fondo (bg)
+        if [[ "$type" == "bg" ]]; then
+            start_spinner "Ejecutando: ${description#* }..."
+            if run_module "${choice}"; then
+                stop_spinner 0 "Módulo '${description}' finalizado."
+            else
+                stop_spinner 1 "Error en el módulo '${description}'."
+                failed+=("${module_file}")
+            fi
+        else # Ejecutar sin spinner para tareas interactivas (fg)
+            if ! run_module "${choice}"; then
+                log_error "Error en el módulo '${description}'."
+                failed+=("${module_file}")
+            fi
         fi
         echo ""
     done
@@ -244,8 +257,11 @@ main() {
 
         elif [[ "$choice" == "A" ]]; then
                 echo -ne "${BOLD}¿Instalar todas las opciones (1, 2, 3, 4, 5, 6)? [s/N]: ${NC} "
+                log_warning "NOTA: La opción 'Instalar Todo' incluye DaVinci Resolve, que requiere"
+                log_warning "que hayas descargado el archivo ZIP manualmente en tu carpeta ~/Downloads/."
+                echo -ne "${BOLD}¿Confirmas que has hecho esto y deseas continuar? [s/N]: ${NC} "
                 read -r confirm
-                if [[ "${confirm}" =~ ^[Ss]$ ]]; then
+                if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
                     install_all
                 else
                     log_info "Instalación cancelada"
@@ -263,4 +279,11 @@ main() {
 }
 
 # Ejecutar función principal
-main "$@"
+
+# --- Redirección de logs ---
+# Crear un nombre de archivo de log con la fecha y hora
+LOG_FILE="${SCRIPT_DIR}/omarchy-setup-$(date +%F_%H-%M-%S).log"
+
+# Ejecutar la función principal y redirigir toda la salida (stdout y stderr)
+# al archivo de log, mientras también se muestra en la terminal.
+main "$@" 2>&1 | tee -a "${LOG_FILE}"

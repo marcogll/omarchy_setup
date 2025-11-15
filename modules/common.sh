@@ -36,10 +36,43 @@ log_step() {
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}\n"
 }
 
+# Función para crear una copia de seguridad de un archivo o directorio
+# Uso: backup_file "/ruta/al/archivo"
+backup_file() {
+    local path_to_backup="$1"
+    if [[ -e "$path_to_backup" ]]; then
+        local backup_path="${path_to_backup}.bak_$(date +%F_%T)"
+        log_warning "Se encontró un archivo existente en '${path_to_backup}'."
+        log_info "Creando copia de seguridad en: ${backup_path}"
+        if mv "$path_to_backup" "$backup_path"; then
+            log_success "Copia de seguridad creada."
+        else
+            log_error "No se pudo crear la copia de seguridad. Abortando para evitar pérdida de datos."
+            return 1
+        fi
+    fi
+    return 0
+}
+
 # Función para verificar si un comando existe
 command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
+
+# Función para verificar e instalar un paquete con pacman
+# Uso: check_and_install_pkg "nombre-del-paquete"
+check_and_install_pkg() {
+    local pkg_name="$1"
+    # pacman -T es una forma de verificar sin instalar, pero no funciona bien con grupos.
+    # pacman -Q es más fiable para paquetes individuales.
+    if ! pacman -Q "$pkg_name" &>/dev/null; then
+        log_info "Instalando ${pkg_name}..."
+        sudo pacman -S --noconfirm --needed "$pkg_name" || log_warning "No se pudo instalar ${pkg_name}."
+    else
+        log_info "${pkg_name} ya está instalado."
+    fi
+}
+
 
 # Función para instalar helper AUR si no existe
 ensure_aur_helper() {
@@ -75,4 +108,3 @@ cleanup_orphans() {
     sudo pacman -Rns $(pacman -Qtdq) --noconfirm 2>/dev/null || true
     log_success "Limpieza completada"
 }
-

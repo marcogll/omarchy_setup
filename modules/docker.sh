@@ -30,33 +30,38 @@ install_docker() {
         log_warning "Necesitarás cerrar sesión y volver a iniciar para usar Docker sin sudo"
     fi
     
-    # Instalar Portainer
-    log_info "Configurando Portainer..."
-    
-    # Verificar si Portainer ya está corriendo
-    if sudo docker ps -a --format '{{.Names}}' | grep -q "^portainer$"; then
-        log_info "Portainer ya existe. Reiniciando contenedor..."
-        sudo docker stop portainer 2>/dev/null || true
-        sudo docker rm portainer 2>/dev/null || true
-    fi
-    
-    # Crear volumen y contenedor de Portainer
-    sudo docker volume create portainer_data 2>/dev/null || true
-    
-    if sudo docker run -d -p 8000:8000 -p 9443:9443 \
-        --name portainer \
-        --restart=always \
-        -v /var/run/docker.sock:/var/run/docker.sock \
-        -v portainer_data:/data \
-        portainer/portainer-ce:latest; then
-        log_success "Portainer instalado y ejecutándose"
-        log_info "Accede a Portainer en: https://localhost:9443"
+    echo ""
+    read -p "¿Deseas instalar Portainer (interfaz web para Docker)? [S/n]: " confirm_portainer
+    if [[ ! "${confirm_portainer}" =~ ^[Nn]$ ]]; then
+        log_info "Configurando Portainer..."
+        
+        # Verificar si Portainer ya está corriendo
+        if sudo docker ps -a --format '{{.Names}}' | grep -q "^portainer$"; then
+            log_info "Portainer ya existe. Reiniciando contenedor..."
+            sudo docker stop portainer 2>/dev/null || true
+            sudo docker rm portainer 2>/dev/null || true
+        fi
+        
+        # Crear volumen y contenedor de Portainer
+        sudo docker volume create portainer_data 2>/dev/null || true
+        
+        if sudo docker run -d -p 8000:8000 -p 9443:9443 \
+            --name portainer \
+            --restart=always \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            -v portainer_data:/data \
+            portainer/portainer-ce:latest; then
+            log_success "Portainer instalado y ejecutándose"
+            log_info "Accede a Portainer en: https://localhost:9443"
+        else
+            log_error "Error al instalar Portainer"
+            # No retornamos error, Docker ya está instalado.
+        fi
     else
-        log_error "Error al instalar Portainer"
-        return 1
+        log_info "Se omitió la instalación de Portainer."
     fi
     
-    log_success "Docker y Portainer configurados correctamente"
+    log_success "Configuración de Docker completada."
     return 0
 }
 
@@ -64,4 +69,3 @@ install_docker() {
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     install_docker "$@"
 fi
-
