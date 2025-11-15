@@ -26,10 +26,15 @@ install_mouse_cursor() {
     if curl -sL "$DOWNLOAD_URL" -o "${TEMP_DIR}/${ARCHIVE_NAME}"; then
         tar -xJf "${TEMP_DIR}/${ARCHIVE_NAME}" -C "${TEMP_DIR}"
         mkdir -p "$HOME/.icons"
-        # Mover el contenido extraído al directorio de iconos
+        # Asegurar una instalación limpia eliminando la versión anterior si existe
         if [ -d "${TEMP_DIR}/${CURSOR_THEME}" ]; then
-            mv "${TEMP_DIR}/${CURSOR_THEME}" "$HOME/.icons/"
-            log_success "Tema de cursor instalado en ~/.icons/"
+            rm -rf "$HOME/.icons/${CURSOR_THEME}" # Eliminar destino para evitar conflictos
+            if mv "${TEMP_DIR}/${CURSOR_THEME}" "$HOME/.icons/"; then
+                log_success "Tema de cursor instalado en ~/.icons/"
+            else
+                log_error "No se pudo mover el tema del cursor a ~/.icons/"
+                return 1
+            fi
         else
             log_error "El directorio del tema '${CURSOR_THEME}' no se encontró en el archivo."
             return 1

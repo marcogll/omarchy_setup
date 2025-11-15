@@ -29,7 +29,7 @@ run_module_main() {
 
     # --- Definición de Paquetes ---
     local PACMAN_BASE=(
-        git curl wget base-devel unzip neofetch htop fastfetch btop
+        git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
     )
     local PACMAN_MULTIMEDIA=(
