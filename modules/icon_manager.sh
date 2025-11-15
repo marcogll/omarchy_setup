@@ -49,7 +49,10 @@ apply_theme() {
     # Añadir el comando gsettings para el tema seleccionado
     echo "exec-once = gsettings set org.gnome.desktop.interface icon-theme '$theme_name'" >> "$AUTOSTART_FILE"
 
-    log_success "¡Tema configurado! La configuración se ha guardado en $AUTOSTART_FILE"
+    # Aplicar el tema en la sesión actual para un efecto inmediato
+    gsettings set org.gnome.desktop.interface icon-theme "$theme_name"
+
+    log_success "¡Tema configurado! Se aplicó en la sesión actual y se guardó en $AUTOSTART_FILE"
 }
 
 # --- Funciones de Instalación de Temas ---
@@ -66,21 +69,18 @@ ensure_papirus_installed() {
 }
 
 # Función para instalar y aplicar el tema Tela Nord (usado como default)
-set_default_icon_theme() {
+install_tela_nord() {
     local theme_name="Tela-nord-dark"
-    log_info "Gestionando el tema de iconos '$theme_name'..."
+    echo "--- Gestionando Tela Nord Icons ---"
     if [[ -d "$ICON_DIR_USER/$theme_name" ]]; then
-        log_info "El tema '$theme_name' ya está instalado."
+        log_info "El tema ya está instalado."
     else
-        log_info "Instalando el tema '$theme_name'..."
-        rm -rf "$TEMP_DIR" && mkdir -p "$TEMP_DIR" # Asegurar directorio limpio
+        log_info "Instalando el tema..."
         git clone --depth 1 https://github.com/vinceliuice/Tela-icon-theme.git "$TEMP_DIR/tela"
         "$TEMP_DIR/tela/install.sh" -c nord
-        rm -rf "$TEMP_DIR" # Limpieza
     fi
     apply_theme "$theme_name"
 }
-
 
 install_papirus() {
     local theme_name="Papirus-Dark"
@@ -157,7 +157,7 @@ run_module_main() {
         mkdir -p "$TEMP_DIR"
 
         case $choice in
-            1) set_default_icon_theme ;;
+            1) install_tela_nord ;;
             2) install_papirus ;;
             3) install_papirus_catppuccin ;;
             4) install_candy ;;
@@ -174,6 +174,12 @@ run_module_main() {
     # Limpieza final
     rm -rf "$TEMP_DIR"
     return 0
+}
+
+# La función set_default_icon_theme es un alias para mantener la compatibilidad
+# con otros scripts como hyprland-config.sh
+set_default_icon_theme() {
+    install_tela_nord
 }
 
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
