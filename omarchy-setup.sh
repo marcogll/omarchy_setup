@@ -107,11 +107,11 @@ MODULES=(
     ["7"]="icon_manager;run_module_main;🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.);fg"
     ["8"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
-    ["F"]="disk-format;run_module_main;💾 Formatear un Disco (FAT32, exFAT, NTFS, ext4);fg"
+    ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
 )
 
 # Módulos a incluir en la opción "Instalar Todo"
-INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "8")
+INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "7" "8" "H")
 
 # Función para mostrar el menú
 show_menu() {
@@ -129,7 +129,7 @@ show_menu() {
         echo -e "  ${GREEN}${key})${NC} ${description}"
     done | sort -V
 
-    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 8)"
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (1, 2, 3, 4, 5, 6, 7, 8, H)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -303,7 +303,7 @@ main() {
             read -p "Presiona Enter para continuar..."
 
         elif [[ "$choice" == "A" ]]; then
-                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6 y 8."
+                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6, 7, 8 y H."
                 log_warning "DaVinci Resolve requiere que el ZIP de instalación esté en ~/Downloads/."
                 echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
