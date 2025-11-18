@@ -37,10 +37,6 @@ chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 SPINNER_ACTIVE=0
 SPINNER_MESSAGE=
 
-spinner_clear_line() {
-    :
-}
-
 pause_spinner() {
     if (( SPINNER_ACTIVE )); then
         SPINNER_ACTIVE=0
@@ -141,8 +137,23 @@ MODULES=(
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
 )
 
+# Módulos a excluir de la opción "Instalar Todo"
+EXCLUDED_FROM_ALL=("R")
+
+# Generar dinámicamente la lista de módulos para "Instalar Todo"
+get_install_all_choices() {
+    local choices=()
+    for key in $(printf '%s\n' "${!MODULES[@]}" | sort -V); do
+        # Verificar si la clave no está en el array de exclusión
+        if ! [[ " ${EXCLUDED_FROM_ALL[*]} " =~ " ${key} " ]]; then
+            choices+=("$key")
+        fi
+    done
+    echo "${choices[@]}"
+}
+
 # Módulos a incluir en la opción "Instalar Todo"
-INSTALL_ALL_CHOICES=("1" "2" "K" "3" "4" "5" "6" "7" "F" "H")
+INSTALL_ALL_CHOICES=($(get_install_all_choices))
 
 # Función para mostrar el menú
 show_menu() {
@@ -160,7 +171,8 @@ show_menu() {
         echo -e "  ${GREEN}${key})${NC} ${description}"
     done | sort -V
 
-    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (1, 2, 3, 4, 5, 6, 7, F, H)"
+    local install_all_keys=$(IFS=,; echo "${INSTALL_ALL_CHOICES[*]}")
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (${install_all_keys//,/, }) (excluye DaVinci)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -265,9 +277,6 @@ install_all() {
     local failed=()
     
     for choice in "${INSTALL_ALL_CHOICES[@]}"; do
-        if [[ "$choice" == "R" ]]; then
-            continue
-        fi
         IFS=';' read -r module_file _ description type <<< "${MODULES[$choice]}"
 
         if ! ensure_sudo_session; then
@@ -337,7 +346,6 @@ main() {
     export -f stop_spinner
     export -f pause_spinner
     export -f resume_spinner
-    export -f spinner_clear_line
     export -f ensure_sudo_session
 
     while true; do
@@ -385,8 +393,9 @@ main() {
             read -p "Presiona Enter para continuar..."
 
         elif [[ "$choice" == "A" ]]; then
-                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, K, 3, 4, 5, 6, 7, F y H."
-                log_info "DaVinci Resolve (opción R) no se ejecutará en este lote; instálalo aparte cuando ya tengas el ZIP."
+                local modules_to_install=$(IFS=,; echo "${INSTALL_ALL_CHOICES[*]}")
+                log_warning "La opción 'Instalar Todo' ejecutará los módulos: ${modules_to_install//,/, }."
+                log_info "Los módulos excluidos (como DaVinci Resolve) deben instalarse por separado."
                 echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
                 if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
