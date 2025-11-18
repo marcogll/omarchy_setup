@@ -244,12 +244,40 @@ run_module_with_retry() {
     local choice=$1
     local max_intentos=2
     local intento_actual=1
+    local module_entry="${MODULES[$choice]}"
+    local module_type=""
+    if [[ -n "$module_entry" ]]; then
+        IFS=';' read -r _ _ _ module_type <<< "$module_entry"
+    fi
+    local tmp_output=""
+    if [[ "$module_type" == "bg" ]]; then
+        tmp_output="$(mktemp)"
+    fi
 
     while [ $intento_actual -le $max_intentos ]; do
-        run_module "$choice"
-        local estado_salida=$?
+        local estado_salida=0
+        if [[ -n "$tmp_output" ]]; then
+            run_module "$choice" >"$tmp_output" 2>&1
+            estado_salida=$?
+            if [[ -s "$tmp_output" ]]; then
+                if declare -F pause_spinner >/dev/null; then
+                    pause_spinner
+                fi
+                cat "$tmp_output"
+            fi
+            : > "$tmp_output"
+            if [[ $estado_salida -ne 0 && $intento_actual -lt $max_intentos ]] && declare -F resume_spinner >/dev/null; then
+                resume_spinner
+            fi
+        else
+            run_module "$choice"
+            estado_salida=$?
+        fi
 
         if [ $estado_salida -eq 0 ]; then
+            if [[ -n "$tmp_output" ]]; then
+                rm -f "$tmp_output"
+            fi
             return 0 # Éxito, salimos de la función
         fi
 
@@ -262,6 +290,9 @@ run_module_with_retry() {
     done
 
     log_error "El módulo falló después de $max_intentos intentos."
+    if [[ -n "$tmp_output" ]]; then
+        rm -f "$tmp_output"
+    fi
     return 1 # Falla definitiva
 }
 

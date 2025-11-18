@@ -6,7 +6,8 @@ Script de instalación y configuración **modular** para **Arch Linux / Omarchy*
 
 - **✅ Estructura Modular**: Scripts independientes para cada componente
 - **🎨 Menú Interactivo**: Selecciona qué instalar según tus necesidades
-- **🎨 Interfaz Mejorada**: Colores y mensajes claros durante la instalación
+- **🌀 Spinner Inteligente**: Las tareas en background muestran progreso sin invadir los prompts interactivos
+- **🔐 Sesión Sudo Persistente**: Reutiliza la contraseña durante toda la ejecución para evitar interrupciones
 - **🔧 Fácil de Extender**: Agrega nuevos módulos fácilmente
 
 ## ⚡ Instalación rápida
@@ -27,7 +28,7 @@ omarchy_zsh_setup/
 ├── omarchy-setup.sh          # Script maestro con menú interactivo
 ├── modules/
 │   ├── common.sh              # Funciones comunes (colores, logging, etc.)
-│   ├── apps.sh                # Instalación de aplicacionesç
+│   ├── apps.sh                # Instalación de aplicaciones
 │   ├── zsh-config.sh          # Configuración de Zsh
 │   ├── docker.sh              # Docker y Portainer
 │   ├── zerotier.sh            # ZeroTier VPN
@@ -65,12 +66,19 @@ Selecciona las opciones que deseas instalar:
 
 > ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, 3, 4, 5, 6, 7, F y H. DaVinci Resolve (`R`) no se incluye aquí; instálalo manualmente cuando ya tengas el ZIP en `~/Downloads/`.
 
+> 🌀 **Spinner inteligente:** Los módulos en background muestran una animación de progreso pero detienen la animación antes de cualquier interacción con el usuario; toda la salida detallada se imprime limpia y se escribe en `./logs/`.
+
 ## 📋 Módulos Disponibles
 
 ### 1. 📦 Aplicaciones (`apps.sh`)
 - Editores como VS Code y Cursor (desde AUR)
+- Configura GNOME Keyring como agente de contraseñas y SSH, iniciando el daemon y exportando `SSH_AUTH_SOCK`
+- Detecta claves privadas en `~/.ssh` y las registra automáticamente con `ssh-add`
+- Instala y habilita servicios complementarios (keyd, logiops, TeamViewer, etc.)
 
 ### 2. 🐚 Zsh (`zsh-config.sh`)
+- Instala Oh My Zsh y Oh My Posh (Catppuccin Frappe) con autocompletado
+- Clona/actualiza plugins externos como `zsh-autosuggestions` y `zsh-syntax-highlighting` (con fallback al sistema)
 - Modifica `.bashrc` para lanzar Zsh automáticamente
 
 ### 3. 🐳 Docker (`docker.sh`)
@@ -148,6 +156,11 @@ cd omarchy_setup
   - Telegram Desktop
   - scrcpy (control Android desde PC)
 - **Utilidades**: neofetch, htop, fastfetch, btop, vim, nano, tmux
+- **Seguridad y sincronización**:
+  - GNOME Keyring + libsecret + Seahorse
+  - Configuración automática del agente SSH y carga de claves en `~/.ssh`
+  - openssh, rsync
+- Recomendado cerrar sesión tras la instalación para que las variables de entorno del keyring se apliquen a nuevas terminales
 - **Flatpak**: Sistema de paquetes universal
 - **Drivers Intel Iris Xe**:
   - Mesa y Vulkan (gráficos 3D)
@@ -163,6 +176,9 @@ cd omarchy_setup
   - intel-compute-runtime (OpenCL para Intel)
 
 ### 🐚 Zsh
+- Oh My Zsh + Oh My Posh (tema Catppuccin Frappe)
+- Plugins externos gestionados automáticamente (`zsh-autosuggestions`, `zsh-syntax-highlighting`)
+- Genera el archivo de autocompletado `_oh-my-posh` en `~/.local/share/zsh/site-functions`
 - Modifica `.bashrc` para lanzar Zsh automáticamente
 
 ### 🐳 Docker
