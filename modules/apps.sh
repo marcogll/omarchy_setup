@@ -31,6 +31,7 @@ run_module_main() {
     local PACMAN_BASE=(
         git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
+        gnome-keyring libsecret seahorse openssh rsync
     )
     local PACMAN_MULTIMEDIA=(
         vlc vlc-plugins-all libdvdcss audacity inkscape
@@ -144,6 +145,71 @@ run_module_main() {
     
     # Configurar servicios
     log_info "Configurando servicios..."
+    
+    log_info "Configurando GNOME Keyring como agente de credenciales..."
+    mkdir -p "${HOME}/.config/environment.d"
+    cat <<'EOF' > "${HOME}/.config/environment.d/10-gnome-keyring.conf"
+SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
+EOF
+    if systemctl --user enable --now gnome-keyring-daemon.socket gnome-keyring-daemon.service >/dev/null 2>&1; then
+        log_success "GNOME Keyring listo para gestionar contraseñas y claves SSH."
+    else
+        log_warning "No se pudo habilitar gnome-keyring-daemon en systemd de usuario. Verifica que tu sesión use systemd (--user)."
+    fi
+    if command_exists gnome-keyring-daemon; then
+        local keyring_eval
+        keyring_eval="$(gnome-keyring-daemon --start --components=secrets,ssh 2>/dev/null)" || keyring_eval=""
+        if [[ -n "$keyring_eval" ]]; then
+            eval "$keyring_eval"
+        fi
+    fi
+    local keyring_socket="/run/user/$UID/keyring/ssh"
+    if [[ -S "$keyring_socket" ]]; then
+        export SSH_AUTH_SOCK="$keyring_socket"
+    fi
+    log_info "Vuelve a iniciar sesión para que las variables de entorno del keyring se apliquen."
+    
+    if command_exists ssh-add; then
+        local ssh_dir="${HOME}/.ssh"
+        if [[ -d "$ssh_dir" ]]; then
+            mapfile -t ssh_private_keys < <(find "$ssh_dir" -maxdepth 1 -type f -name "id_*" ! -name "*.pub" ! -name "*-cert.pub" 2>/dev/null)
+            if [[ ${#ssh_private_keys[@]} -gt 0 ]]; then
+                log_info "Agregando claves SSH detectadas al keyring (se solicitará la passphrase si aplica)..."
+                for key_path in "${ssh_private_keys[@]}"; do
+                    if [[ ! -r "$key_path" ]]; then
+                        log_warning "No se puede leer la clave $(basename "$key_path"); revísala manualmente."
+                        continue
+                    fi
+                    if ssh-keygen -y -f "$key_path" >/dev/null 2>&1; then
+                        log_info "Registrando clave $(basename "$key_path")..."
+                        local spinner_was_active=0
+                        if [[ -n "${SPINNER_PID:-}" ]]; then
+                            spinner_was_active=1
+                        fi
+                        if declare -F pause_spinner >/dev/null; then
+                            pause_spinner
+                        fi
+                        if SSH_AUTH_SOCK="$SSH_AUTH_SOCK" ssh-add "$key_path"; then
+                            log_success "Clave $(basename "$key_path") añadida al keyring."
+                        else
+                            log_warning "No se pudo añadir la clave $(basename "$key_path")."
+                        fi
+                        if (( spinner_was_active )) && declare -F resume_spinner >/dev/null; then
+                            resume_spinner
+                        fi
+                    else
+                        log_warning "La clave $(basename "$key_path") parece inválida. Se omite."
+                    fi
+                done
+            else
+                log_info "No se encontraron claves privadas SSH en ${ssh_dir}."
+            fi
+        else
+            log_info "No se detectó el directorio ~/.ssh; omitiendo carga de claves."
+        fi
+    else
+        log_warning "ssh-add no está disponible; no se pueden registrar claves en el keyring."
+    fi
     
     # Habilitar keyd si está instalado
     if command_exists keyd; then

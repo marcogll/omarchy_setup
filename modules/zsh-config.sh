@@ -29,6 +29,7 @@ install_zsh() {
     # --- 1. Instalar paquetes necesarios desde Pacman ---
     log_info "Instalando Zsh y herramientas esenciales..."
     local pkgs=(
+        git
         zsh 
         zsh-completions 
         zsh-syntax-highlighting 
@@ -79,6 +80,34 @@ install_zsh() {
     else
         log_info "Oh My Zsh ya está instalado."
     fi
+    
+    # Asegurar plugins personalizados de Oh My Zsh (zsh-autosuggestions, zsh-syntax-highlighting)
+    local zsh_custom="${target_ohmyzsh_dir}/custom"
+    local zsh_custom_plugins="${zsh_custom}/plugins"
+    mkdir -p "$zsh_custom_plugins"
+
+    ensure_omz_plugin() {
+        local name="$1"
+        local repo="$2"
+        local plugin_path="${zsh_custom_plugins}/${name}"
+
+        if [[ -d "${plugin_path}/.git" ]]; then
+            log_info "Actualizando plugin ${name}..."
+            git -C "$plugin_path" pull --ff-only >/dev/null 2>&1 || true
+        elif [[ -d "$plugin_path" ]]; then
+            log_info "Plugin ${name} ya existe."
+        else
+            log_info "Clonando plugin ${name}..."
+            if git clone --depth 1 "$repo" "$plugin_path" >/dev/null 2>&1; then
+                log_success "Plugin ${name} instalado."
+            else
+                log_warning "No se pudo clonar ${name}. Se usará la versión de los paquetes del sistema."
+            fi
+        fi
+    }
+
+    ensure_omz_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions.git"
+    ensure_omz_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
 
     # --- 3. Descargar y configurar el .zshrc personalizado ---
     log_info "Actualizando configuración .zshrc..."
@@ -142,6 +171,14 @@ install_zsh() {
         else
             log_error "No se pudo descargar el tema de Oh My Posh y no hay copia local disponible."
             # No retornamos error, el .zshrc tiene un fallback
+        fi
+    fi
+
+    if command_exists oh-my-posh; then
+        local omp_completion_dir="${target_home}/.local/share/zsh/site-functions"
+        mkdir -p "$omp_completion_dir"
+        if oh-my-posh completion zsh > "${omp_completion_dir}/_oh-my-posh" 2>/dev/null; then
+            log_success "Autocompletado de Oh My Posh actualizado."
         fi
     fi
 

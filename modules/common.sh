@@ -14,19 +14,29 @@ NC='\033[0m' # No Color
 BOLD='\033[1m'
 
 # Funciones de logging
+_maybe_clear_spinner() {
+    if declare -F spinner_clear_line >/dev/null; then
+        spinner_clear_line
+    fi
+}
+
 log_info() {
+    _maybe_clear_spinner
     echo -e "${BLUE}▶${NC} ${BOLD}$1${NC}"
 }
 
 log_success() {
+    _maybe_clear_spinner
     echo -e "${GREEN}✓${NC} ${GREEN}$1${NC}"
 }
 
 log_warning() {
+    _maybe_clear_spinner
     echo -e "${YELLOW}⚠${NC} ${YELLOW}$1${NC}"
 }
 
 log_error() {
+    _maybe_clear_spinner
     echo -e "${RED}✗${NC} ${RED}$1${NC}"
 }
 

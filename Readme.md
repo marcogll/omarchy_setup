@@ -56,14 +56,14 @@ Selecciona las opciones que deseas instalar:
   5) 🖨️  Configurar Impresoras (CUPS)
   6) 🖱️ Instalar Tema de Cursor (Bibata)
   7) 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)
-  8) 🎬 Instalar DaVinci Resolve (Intel Edition)
-  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 8)
-  F) 💾 Formatear un Disco (FAT32, exFAT, NTFS, ext4)
+  F) 💾 Habilitar Formatos FAT/exFAT/NTFS/ext4
   H) 🎨 Instalar Configuración de Hyprland
+  R) 🎬 Instalar DaVinci Resolve (Intel Edition)
+  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 7, F, H)
   0) 🚪 Salir
 ```
 
-> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, 3, 4, 5, 6 y 8. Antes de usarla asegúrate de haber descargado manualmente el instalador de DaVinci Resolve (ZIP) en `~/Downloads/`.
+> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, 3, 4, 5, 6, 7, F y H. DaVinci Resolve (`R`) no se incluye aquí; instálalo manualmente cuando ya tengas el ZIP en `~/Downloads/`.
 
 ## 📋 Módulos Disponibles
 
@@ -95,7 +95,11 @@ Selecciona las opciones que deseas instalar:
 ### 7. 🎨 Gestor de Iconos (`icon_manager.sh`)
 - Menú interactivo para instalar y cambiar entre temas de iconos como Papirus, Tela y Candy.
 
-### 8. 🎬 DaVinci Resolve (`davinci-resolve.sh`)
+### F. 💾 Soporte de Formatos (`disk-format.sh`)
+- Instala utilidades para FAT32, exFAT, NTFS y ext4
+- Añade herramientas gráficas (GParted, GNOME Disks) para formateo manual
+
+### R. 🎬 DaVinci Resolve (`davinci-resolve.sh`)
 - Configuración de librerías y wrapper
 
 ## 🔧 Ejecutar Módulos Individualmente

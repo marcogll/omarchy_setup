@@ -38,9 +38,17 @@ zstyle ':completion:*' menu select
 # Cargar plugins específicos (zsh-autosuggestions y zsh-syntax-highlighting)
 [ -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
   source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+if [ ! -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
+   [ -r "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ]; then
+  source "/usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
+fi
 
 [ -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && \
   source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+if [ ! -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ] && \
+   [ -r "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh" ]; then
+  source "/usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh"
+fi
 
 # --- Oh My Posh --------------------------------------------------------------
 # Asegúrate de que Oh My Posh esté instalado y el tema 'catppuccin_frappe.omp.json'
@@ -289,9 +297,9 @@ ytls() {
 
 # --- GNOME Keyring -----------------------------------------------------------
 # Iniciar gnome-keyring-daemon si la sesión es gráfica y no está corriendo
-if [ -n "$DESKTOP_SESSION" ]; then
+if [ -n "$DESKTOP_SESSION" ] && command -v gnome-keyring-daemon >/dev/null 2>&1; then
   if ! pgrep -u "$USER" gnome-keyring-daemon > /dev/null 2>&1; then
-    eval $(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh 2>/dev/null)
+    eval "$(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh 2>/dev/null)" || true
   fi
   export SSH_AUTH_SOCK GPG_AGENT_INFO GNOME_KEYRING_CONTROL GNOME_KEYRING_PID
 fi

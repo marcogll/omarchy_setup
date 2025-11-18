@@ -9,6 +9,7 @@ set -u
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 MODULES_DIR="${SCRIPT_DIR}/modules"
 REPO_BASE="https://raw.githubusercontent.com/marcogll/omarchy_setup/main"
+SUDO_PASSWORD=""
 
 # Verificar que los módulos existen
 if [[ ! -d "${MODULES_DIR}" ]] || [[ ! -f "${MODULES_DIR}/common.sh" ]]; then
@@ -35,23 +36,59 @@ chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 
 SPINNER_PID=
 SPINNER_DEVICE_ACTIVE=
+SPINNER_MESSAGE=
+
+spinner_clear_line() {
+    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
+    if [[ ! -w "$device" ]]; then
+        device="/dev/null"
+    fi
+    printf '\r\033[K' >"$device" 2>/dev/null || true
+}
+
+pause_spinner() {
+    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
+    if [[ ! -w "$device" ]]; then
+        device="/dev/null"
+    fi
+    if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
+        kill "$SPINNER_PID" &>/dev/null || true
+        wait "$SPINNER_PID" &>/dev/null || true
+    fi
+    spinner_clear_line
+    printf '\033[?25h' >"$device" 2>/dev/null || true
+    SPINNER_PID=
+}
+
+resume_spinner() {
+    if [[ -n "$SPINNER_MESSAGE" ]]; then
+        start_spinner "$SPINNER_MESSAGE"
+    fi
+}
 
 # Inicia una animación de spinner en segundo plano
 # Uso: start_spinner "Mensaje..."
 start_spinner() {
     local message="$1"
+    if [[ -n "$SPINNER_PID" ]]; then
+        pause_spinner
+    fi
+
     local device="/dev/tty"
     if [[ ! -w "$device" ]]; then
         device="/dev/null"
     fi
+
     SPINNER_DEVICE_ACTIVE="$device"
+    SPINNER_MESSAGE="$message"
 
     (
         local chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
         local dev="$device"
+        local msg="$message"
         while :; do
             for (( i=0; i<${#chars}; i++ )); do
-                printf '\r\033[K%s %s' "${CYAN}${chars:$i:1}${NC}" "$message" >"$dev"
+                printf '\r\033[K%s %s' "${CYAN}${chars:$i:1}${NC}" "$msg" >"$dev"
                 sleep 0.1
             done
         done
@@ -67,28 +104,60 @@ stop_spinner() {
     local exit_code=$1
     local success_msg=$2
     local error_msg=${3:-"Ocurrió un error"}
-    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
-    if [[ ! -w "$device" ]]; then
-        device="/dev/null"
-    fi
 
-    if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-        kill "$SPINNER_PID" &>/dev/null
-        wait "$SPINNER_PID" &>/dev/null
-    fi
-    
-    # Limpiar la línea del spinner
-    printf '\r\033[K' >"$device"
-    
+    pause_spinner
+
     if [[ $exit_code -eq 0 ]]; then
         log_success "$success_msg"
     else
         log_error "$error_msg"
     fi
-    # Restaurar cursor
-    printf '\033[?25h' >"$device" 2>/dev/null || true
-    SPINNER_PID=
+
     SPINNER_DEVICE_ACTIVE=
+    SPINNER_MESSAGE=
+}
+
+ensure_sudo_session() {
+    if sudo -n true 2>/dev/null; then
+        return 0
+    fi
+
+    if [[ -n "${SUDO_PASSWORD:-}" ]]; then
+        if printf '%s\n' "$SUDO_PASSWORD" | sudo -S -v >/dev/null 2>&1; then
+            return 0
+        fi
+        SUDO_PASSWORD=""
+        log_warning "La contraseña de sudo almacenada no es válida. Se solicitará nuevamente."
+    fi
+
+    pause_spinner
+
+    local attempts=0
+    while (( attempts < 3 )); do
+        if (( attempts == 0 )); then
+            log_info "Se requiere autenticación de sudo para continuar."
+        else
+            log_info "Intenta ingresar la contraseña nuevamente."
+        fi
+        local password_input=""
+        read -s -p "Contraseña de sudo: " password_input
+        echo ""
+
+        if [[ -z "$password_input" ]]; then
+            log_warning "La contraseña no puede estar vacía."
+        elif printf '%s\n' "$password_input" | sudo -S -v >/dev/null 2>&1; then
+            SUDO_PASSWORD="$password_input"
+            log_success "Sesión de sudo autenticada."
+            return 0
+        else
+            log_error "Contraseña de sudo incorrecta."
+        fi
+
+        ((attempts++))
+    done
+
+    log_error "No se pudo autenticar con sudo después de varios intentos."
+    return 1
 }
 
 # --- Definición de Módulos ---
@@ -101,17 +170,17 @@ MODULES=(
     ["1"]="apps;run_module_main;📦 Instalar Aplicaciones (VS Code, VLC, drivers, etc.);bg"
     ["2"]="zsh-config;install_zsh;🐚 Configurar Zsh (shell, plugins, config);bg"
     ["3"]="docker;install_docker;🐳 Instalar Docker y Portainer;fg"
-    ["4"]="zerotier;install_zerotier;🌐 Instalar ZeroTier VPN;bg"
+    ["4"]="zerotier;install_zerotier;🌐 Instalar ZeroTier VPN;fg"
     ["5"]="printer;install_printer;🖨️  Configurar Impresoras (CUPS);bg"
     ["6"]="mouse_cursor;install_mouse_cursor;🖱️ Instalar Tema de Cursor (Bibata);bg"
     ["7"]="icon_manager;run_module_main;🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.);fg"
-    ["8"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
-    ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
+    ["R"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
+    ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
 )
 
 # Módulos a incluir en la opción "Instalar Todo"
-INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "7" "8" "H")
+INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "7" "F" "H")
 
 # Función para mostrar el menú
 show_menu() {
@@ -129,7 +198,7 @@ show_menu() {
         echo -e "  ${GREEN}${key})${NC} ${description}"
     done | sort -V
 
-    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (1, 2, 3, 4, 5, 6, 7, 8, H)"
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (1, 2, 3, 4, 5, 6, 7, F, H)"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -203,7 +272,15 @@ install_all() {
     local failed=()
     
     for choice in "${INSTALL_ALL_CHOICES[@]}"; do
+        if [[ "$choice" == "R" ]]; then
+            continue
+        fi
         IFS=';' read -r module_file _ description type <<< "${MODULES[$choice]}"
+
+        if ! ensure_sudo_session; then
+            failed+=("${module_file}")
+            continue
+        fi
         
         # Separador visual para cada módulo
         echo -e "\n${MAGENTA}────────────────────────────────────────────────────────────${NC}"
@@ -237,9 +314,9 @@ install_all() {
 # Función principal
 main() {
     # Limpieza al salir: detener el spinner y restaurar el cursor
-    trap 'stop_spinner 1 "Script interrumpido." >/dev/null 2>&1; exit 1' INT TERM
+    trap 'stop_spinner 1 "Script interrumpido." >/dev/null 2>&1; unset SUDO_PASSWORD; exit 1' INT TERM
     # Limpieza final al salir normalmente
-    trap 'tput cnorm' EXIT
+    trap 'tput cnorm; unset SUDO_PASSWORD' EXIT
 
     # Verificar que estamos en Arch Linux
     if [[ ! -f /etc/arch-release ]]; then
@@ -248,15 +325,15 @@ main() {
     fi
     
     # Verificar permisos de sudo
-    if ! sudo -n true 2>/dev/null; then
-        log_info "Este script requiere permisos de sudo"
-        sudo -v
+    if ! ensure_sudo_session; then
+        log_error "No se pudieron obtener privilegios de sudo. Saliendo."
+        exit 1
     fi
     
     # Mantener sudo activo en background
     local parent_pid=$$
     (while true; do
-        sudo -n true
+        sudo -n true >/dev/null 2>&1
         sleep 60
         kill -0 "$parent_pid" || exit
     done 2>/dev/null) &
@@ -265,6 +342,10 @@ main() {
     # Exportar funciones para que los submódulos las puedan usar
     export -f start_spinner
     export -f stop_spinner
+    export -f pause_spinner
+    export -f resume_spinner
+    export -f spinner_clear_line
+    export -f ensure_sudo_session
 
     while true; do
         show_menu
@@ -275,7 +356,7 @@ main() {
             IFS=';' read -r _ _ description type <<< "${MODULES[$choice]}"
             
             # Manejo especial para DaVinci Resolve
-            if [[ "$choice" == "8" ]]; then
+            if [[ "$choice" == "R" ]]; then
                 log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads/"
                 echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC} "
                 read -r confirm
@@ -284,6 +365,11 @@ main() {
                     read -p "Presiona Enter para continuar..."
                     continue
                 fi
+            fi
+
+            if ! ensure_sudo_session; then
+                read -p "Presiona Enter para continuar..."
+                continue
             fi
 
             if [[ "$type" == "bg" ]]; then
@@ -300,11 +386,14 @@ main() {
             fi
 
             echo ""
+            if declare -F pause_spinner >/dev/null; then
+                pause_spinner
+            fi
             read -p "Presiona Enter para continuar..."
 
         elif [[ "$choice" == "A" ]]; then
-                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6, 7, 8 y H."
-                log_warning "DaVinci Resolve requiere que el ZIP de instalación esté en ~/Downloads/."
+                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6, 7, F y H."
+                log_info "DaVinci Resolve (opción R) no se ejecutará en este lote; instálalo aparte cuando ya tengas el ZIP."
                 echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
                 if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
@@ -313,12 +402,18 @@ main() {
                     log_info "Instalación cancelada"
                 fi
                 echo ""
+                if declare -F pause_spinner >/dev/null; then
+                    pause_spinner
+                fi
                 read -p "Presiona Enter para continuar..."
         elif [[ "$choice" == "0" ]]; then
                 log_info "Saliendo..."
                 exit 0
         else
                 log_error "Opción inválida. Presiona Enter para continuar..."
+                if declare -F pause_spinner >/dev/null; then
+                    pause_spinner
+                fi
                 read -r
         fi
     done
