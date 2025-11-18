@@ -161,14 +161,63 @@ Un instalador especializado para DaVinci Resolve, enfocado en sistemas con GPUs 
   - Extrae el instalador, aplica parches a las librerías con `patchelf` y lo copia todo a `/opt/resolve`.
   - Crea un script "wrapper" y un acceso directo en el menú de aplicaciones para lanzar el programa con la configuración correcta.
 
-### 11. Configuración de Hyprland (`hyprland-config.sh`)
+# Verificar que el keyring está corriendo
+pgrep -u "$USER" gnome-keyring-daemon
+```
+
+### ZeroTier no conecta
+
+```bash
+# Verificar servicio
+sudo systemctl status zerotier-one
+
+# Ver logs
+sudo journalctl -u zerotier-one -f
+
+# Reiniciar servicio
+sudo systemctl restart zerotier-one
+
+# Verificar que autorizaste el nodo en https://my.zerotier.com
+ztinfo
+ztstatus
+```
+
+### Oh My Posh no se muestra correctamente
+
+Para que el tema de Oh My Posh se visualice correctamente, es **esencial** tener instalada una "Nerd Font". Estas fuentes incluyen los íconos y símbolos especiales que usa el prompt.
+
+El script **no** instala fuentes automáticamente, pero puedes hacerlo fácilmente con el siguiente comando:
+
+```bash
+# Instalar la fuente recomendada (Meslo LGM Nerd Font)
+oh-my-posh font install meslo
+```
+
+Después de instalar la fuente, **debes configurar tu emulador de terminal** para que la use. Este paso es crucial y varía según la terminal que utilices (por ejemplo, en GNOME Terminal, Konsole, Alacritty, etc., deberás ir a sus preferencias y seleccionar "MesloLGM Nerd Font").
+
+**Verificaciones adicionales:**
+
+```bash
+# Verificar que oh-my-posh está instalado
+which oh-my-posh
 
 Instala una configuración personalizada para el gestor de ventanas Hyprland.
 
-- **Cómo funciona:**
-  - Hace una copia de seguridad de tu configuración actual en `~/.config/hypr`.
-  - Copia el contenido de la carpeta `hypr_config` del repositorio a `~/.config/hypr`.
-  - Establece el tema de iconos por defecto (Tela Nord) usando el módulo de gestión de iconos.
+# Listar fuentes para confirmar que Meslo está instalada
+fc-list | grep -i "meslo"
+```
+
+### El shell no cambió a Zsh
+
+```bash
+# Verificar shell actual
+echo $SHELL
+
+# Cambiar manualmente
+chsh -s $(which zsh)
+
+# Cerrar y abrir nueva terminal
+```
 
 ---
 

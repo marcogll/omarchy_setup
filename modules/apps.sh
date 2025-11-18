@@ -19,36 +19,19 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
-# ---------------------------------------------------------------
-# ensure_homebrew_env()
-# ---------------------------------------------------------------
-# Asegura que el entorno de Homebrew esté configurado correctamente.
-#
-# Esta función realiza dos tareas principales:
-#   1. Carga Homebrew en la sesión de shell actual para que el comando `brew`
-#      esté disponible inmediatamente después de la instalación.
-#   2. Añade la línea de inicialización de Homebrew a los ficheros de
-#      perfil del usuario (`.profile` y `.zprofile`) para que `brew`
-#      esté disponible en futuras sesiones de terminal.
-#
-# Parámetros:
-#   $1 - Ruta al ejecutable de brew.
-# ---------------------------------------------------------------
 ensure_homebrew_env() {
     local brew_bin="$1"
     if [[ ! -x "$brew_bin" ]]; then
         return 1
     fi
 
-    # Evalúa `shellenv` para que el resto del módulo pueda usar `brew`
-    # sin necesidad de reiniciar la shell.
+    # Eval shellenv so el resto del módulo pueda usar brew sin reiniciar la shell.
     eval "$("$brew_bin" shellenv)" || return 1
 
     local shell_snippet='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
     local -a appended=()
     local -a rc_targets=("${HOME}/.profile")
 
-    # Si el usuario utiliza Zsh, añade también la configuración a .zprofile.
     if [[ -n "${SHELL:-}" && "$(basename "${SHELL}")" == "zsh" ]]; then
         rc_targets+=("${HOME}/.zprofile")
     fi
@@ -72,16 +55,6 @@ ensure_homebrew_env() {
     return 0
 }
 
-# ---------------------------------------------------------------
-# install_homebrew()
-# ---------------------------------------------------------------
-# Instala Homebrew (conocido como Linuxbrew en Linux).
-#
-# Comprueba si Homebrew ya está instalado. Si no lo está, descarga y
-# ejecuta el script de instalación oficial de forma no interactiva.
-# Después de la instalación, llama a `ensure_homebrew_env` para
-# configurar el entorno de shell.
-# ---------------------------------------------------------------
 install_homebrew() {
     log_step "Instalación de Homebrew (Linuxbrew)"
     

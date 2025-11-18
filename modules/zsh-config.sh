@@ -24,19 +24,9 @@ else
     exit 1
 fi
 
-# Opciones para `curl` que añaden timeouts y reintentos para robustez.
+# Opciones comunes para curl con timeout moderado y reintentos breves.
 ZSH_CURL_TIMEOUT_OPTS=(--fail --location --silent --show-error --connect-timeout 10 --max-time 60 --retry 2 --retry-delay 2)
 
-# ---------------------------------------------------------------
-# zsh_download_with_timeout(url, destination)
-# ---------------------------------------------------------------
-# Descarga un fichero desde una URL a un destino local usando `curl`
-# con las opciones de timeout y reintentos definidas globalmente.
-#
-# Parámetros:
-#   $1 - URL del fichero a descargar.
-#   $2 - Ruta de destino donde se guardará el fichero.
-# ---------------------------------------------------------------
 zsh_download_with_timeout() {
     local url="$1"
     local dest="$2"
@@ -46,11 +36,6 @@ zsh_download_with_timeout() {
     return 1
 }
 
-# ---------------------------------------------------------------
-# install_zsh()
-# ---------------------------------------------------------------
-# Función principal que orquesta toda la configuración de Zsh.
-# ---------------------------------------------------------------
 install_zsh() {
     log_step "Configuración Completa de Zsh"
 
@@ -84,16 +69,28 @@ install_zsh() {
         elif aur_install_packages "oh-my-posh-bin"; then
             log_success "Oh My Posh instalado desde AUR."
         else
-            log_warning "No se pudo instalar Oh My Posh desde pacman ni AUR. Intentando con el script oficial..."
-            local omp_installer; omp_installer="$(mktemp)"
-            if zsh_download_with_timeout "https://ohmyposh.dev/install.sh" "$omp_installer"; then
-                if sudo bash "$omp_installer" -d /usr/local/bin; then
-                    log_success "Oh My Posh instalado con el script oficial."
-                else
-                    log_error "Falló la instalación de Oh My Posh con el script oficial."; rm -f "$omp_installer"; return 1
-                fi; rm -f "$omp_installer"
+            log_warning "Pacman no pudo instalar oh-my-posh. Intentando con un helper AUR..."
+            if aur_install_packages "oh-my-posh-bin"; then
+                log_success "Oh My Posh instalado usando helper AUR (${AUR_HELPER_CMD})."
             else
-                log_error "No se pudo descargar el instalador de Oh My Posh."; rm -f "${omp_installer:-}"; return 1
+                log_warning "No se pudo instalar Oh My Posh mediante pacman ni AUR."
+                log_info "Descargando instalador oficial de Oh My Posh..."
+                local omp_installer
+                omp_installer="$(mktemp)"
+                if [[ -n "$omp_installer" ]] && zsh_download_with_timeout "https://ohmyposh.dev/install.sh" "$omp_installer"; then
+                    if sudo bash "$omp_installer" -d /usr/local/bin; then
+                        log_success "Oh My Posh instalado usando el script oficial."
+                    else
+                        log_error "Falló la instalación de Oh My Posh usando el script oficial."
+                        rm -f "$omp_installer"
+                        return 1
+                    fi
+                    rm -f "$omp_installer"
+                else
+                    rm -f "${omp_installer:-}"
+                    log_error "No se pudo descargar el instalador oficial de Oh My Posh."
+                    return 1
+                fi
             fi
         fi
     else
@@ -104,15 +101,25 @@ install_zsh() {
     local target_ohmyzsh_dir="${target_home}/.oh-my-zsh"
     if [[ ! -d "$target_ohmyzsh_dir" ]]; then
         log_info "Instalando Oh My Zsh..."
-        local omz_installer; omz_installer="$(mktemp)"
-        if zsh_download_with_timeout "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" "$omz_installer"; then
-            # Se ejecuta de forma no interactiva, sin cambiar el shell aún.
-            if ! env HOME="$target_home" RUNZSH=no CHSH=no sh "$omz_installer" --unattended --keep-zshrc; then
-                log_error "Falló la instalación de Oh My Zsh."; rm -f "$omz_installer"; return 1
-            fi; rm -f "$omz_installer"
-        else
-            log_error "No se pudo descargar el instalador de Oh My Zsh."; rm -f "${omz_installer:-}"; return 1
+        local omz_installer
+        omz_installer="$(mktemp)"
+        if [[ -z "$omz_installer" ]]; then
+            log_error "No se pudo crear un archivo temporal para el instalador de Oh My Zsh."
+            return 1
         fi
+        if zsh_download_with_timeout "https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh" "$omz_installer"; then
+            # Usar RUNZSH=no para evitar que inicie un nuevo shell y CHSH=no para no cambiar el shell aún
+            if ! env HOME="$target_home" RUNZSH=no CHSH=no sh "$omz_installer" --unattended --keep-zshrc; then
+                rm -f "$omz_installer"
+                log_error "Falló la instalación de Oh My Zsh."
+                return 1
+            fi
+        else
+            rm -f "$omz_installer"
+            log_error "No se pudo descargar el instalador de Oh My Zsh."
+            return 1
+        fi
+        rm -f "$omz_installer"
     else
         log_info "Oh My Zsh ya está instalado."
     fi
@@ -137,8 +144,8 @@ install_zsh() {
     log_info "Configurando el fichero .zshrc..."
     local tmp_download="${target_home}/.zshrc.omarchy-tmp"
     local source_file=""
-    # Intenta descargar el .zshrc desde el repositorio remoto.
-    if zsh_download_with_timeout "${REPO_BASE}/.zshrc" "$tmp_download"; then
+
+    if zsh_download_with_timeout "${REPO_BASE}/.zshrc" "$tmp_download" && [[ -s "$tmp_download" ]]; then
         source_file="$tmp_download"
     # Si falla, usa la copia local que viene con el script.
     elif [[ -f "${SCRIPT_DIR_ROOT}/.zshrc" ]]; then
@@ -160,11 +167,19 @@ install_zsh() {
     local posh_themes_dir="${target_home}/.poshthemes"
     local theme_file="$posh_themes_dir/catppuccin_frappe.omp.json"
     mkdir -p "$posh_themes_dir"
-    # Descarga el tema y, si falla, usa la copia local.
-    if ! zsh_download_with_timeout "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_frappe.omp.json" "$theme_file"; then
-        if [[ -f "${SCRIPT_DIR_ROOT}/themes/catppuccin_frappe.omp.json" ]]; then
-            cp "${SCRIPT_DIR_ROOT}/themes/catppuccin_frappe.omp.json" "$theme_file"
-            log_warning "No se pudo descargar el tema. Se usó la copia local."
+    
+    if zsh_download_with_timeout "https://raw.githubusercontent.com/JanDeDobbeleer/oh-my-posh/main/themes/catppuccin_frappe.omp.json" "$theme_file"; then
+        chmod 644 "$theme_file" 2>/dev/null || true
+        log_success "Tema Catppuccin Frappe descargado en $theme_file"
+    else
+        rm -f "$theme_file"
+        if [[ -f "$posh_theme_local" ]]; then
+            if cp "$posh_theme_local" "$theme_file"; then
+                chmod 644 "$theme_file" 2>/dev/null || true
+                log_warning "No se pudo descargar el tema remoto. Se utilizó la copia incluida en el repositorio."
+            else
+                log_error "No se pudo copiar la versión local del tema Catppuccin."
+            fi
         else
             log_error "No se pudo obtener el tema de Oh My Posh."
         fi
