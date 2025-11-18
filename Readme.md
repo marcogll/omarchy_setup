@@ -6,7 +6,7 @@ Script de instalación y configuración **modular** para **Arch Linux / Omarchy*
 
 - **✅ Estructura Modular**: Scripts independientes para cada componente
 - **🎨 Menú Interactivo**: Selecciona qué instalar según tus necesidades
-- **🌀 Spinner Inteligente**: Las tareas en background muestran progreso sin invadir los prompts interactivos
+- **🌀 Progreso Limpio**: Las tareas en background muestran el estado sin invadir los prompts interactivos
 - **🔐 Sesión Sudo Persistente**: Reutiliza la contraseña durante toda la ejecución para evitar interrupciones
 - **🔧 Fácil de Extender**: Agrega nuevos módulos fácilmente
 
@@ -35,6 +35,7 @@ omarchy_zsh_setup/
 │   ├── printer.sh             # Configuración de impresoras (CUPS)
 │   ├── mouse_cursor.sh        # Tema de cursor Bibata
 │   ├── icon_manager.sh        # Gestor de temas de iconos
+│   ├── ssh-keyring.sh         # Sincronización de claves SSH con GNOME Keyring
 │   ├── davinci-resolve.sh     # DaVinci Resolve (Intel Edition)
 └── Readme.md
 ```
@@ -57,16 +58,17 @@ Selecciona las opciones que deseas instalar:
   5) 🖨️  Configurar Impresoras (CUPS)
   6) 🖱️ Instalar Tema de Cursor (Bibata)
   7) 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)
+  K) 🔐 Sincronizar claves SSH con GNOME Keyring
   F) 💾 Habilitar Formatos FAT/exFAT/NTFS/ext4
   H) 🎨 Instalar Configuración de Hyprland
   R) 🎬 Instalar DaVinci Resolve (Intel Edition)
-  A) ✅ Instalar Todo (opciones 1, 2, 3, 4, 5, 6, 7, F, H)
+  A) ✅ Instalar Todo (opciones 1, 2, K, 3, 4, 5, 6, 7, F, H)
   0) 🚪 Salir
 ```
 
-> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, 3, 4, 5, 6, 7, F y H. DaVinci Resolve (`R`) no se incluye aquí; instálalo manualmente cuando ya tengas el ZIP en `~/Downloads/`.
+> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, K, 3, 4, 5, 6, 7, F y H. DaVinci Resolve (`R`) no se incluye aquí; instálalo manualmente cuando ya tengas el ZIP en `~/Downloads/`.
 
-> 🌀 **Spinner inteligente:** Los módulos en background muestran una animación de progreso pero detienen la animación antes de cualquier interacción con el usuario; toda la salida detallada se imprime limpia y se escribe en `./logs/`.
+> 🌀 **Progreso limpio:** Los módulos en background informan su avance sin animaciones invasivas; toda la salida detallada se imprime limpia y se escribe en `./logs/`.
 
 ## 📋 Módulos Disponibles
 
@@ -103,6 +105,11 @@ Selecciona las opciones que deseas instalar:
 ### 7. 🎨 Gestor de Iconos (`icon_manager.sh`)
 - Menú interactivo para instalar y cambiar entre temas de iconos como Papirus, Tela y Candy.
 
+### K. 🔐 Sincronizar Claves SSH (`ssh-keyring.sh`)
+- Inicia/activa GNOME Keyring para componentes `ssh` y `secrets`
+- Exporta `SSH_AUTH_SOCK` y registra claves desde `~/.ssh` usando `ssh-add`
+- Evita duplicados mediante fingerprints y muestra un resumen al finalizar
+
 ### F. 💾 Soporte de Formatos (`disk-format.sh`)
 - Instala utilidades para FAT32, exFAT, NTFS y ext4
 - Añade herramientas gráficas (GParted, GNOME Disks) para formateo manual
@@ -120,6 +127,9 @@ Cada módulo puede ejecutarse de forma independiente:
 
 # Configurar solo Zsh
 ./modules/zsh-config.sh
+
+# Sincronizar claves SSH con GNOME Keyring
+./modules/ssh-keyring.sh
 
 # Instalar Docker
 ./modules/docker.sh
@@ -180,6 +190,12 @@ cd omarchy_setup
 - Plugins externos gestionados automáticamente (`zsh-autosuggestions`, `zsh-syntax-highlighting`)
 - Genera el archivo de autocompletado `_oh-my-posh` en `~/.local/share/zsh/site-functions`
 - Modifica `.bashrc` para lanzar Zsh automáticamente
+
+### 🔐 GNOME Keyring SSH
+- Arranca el daemon de GNOME Keyring con componentes de `ssh` y `secrets`
+- Garantiza que `SSH_AUTH_SOCK` apunte al socket del keyring (persistido en `~/.config/environment.d`)
+- Busca claves privadas en `~/.ssh` (excluyendo `.pub` y certificados) y las registra con `ssh-add`
+- Evita añadir claves duplicadas y muestra cómo verificar con `ssh-add -l`
 
 ### 🐳 Docker
 - Portainer (interfaz web de gestión)

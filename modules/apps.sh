@@ -172,7 +172,19 @@ EOF
     if command_exists ssh-add; then
         local ssh_dir="${HOME}/.ssh"
         if [[ -d "$ssh_dir" ]]; then
-            mapfile -t ssh_private_keys < <(find "$ssh_dir" -maxdepth 1 -type f -name "id_*" ! -name "*.pub" ! -name "*-cert.pub" 2>/dev/null)
+            mapfile -t ssh_private_keys < <(
+                find "$ssh_dir" -maxdepth 1 -type f -perm -u=r \
+                    ! -name "*.pub" \
+                    ! -name "*-cert.pub" \
+                    ! -name "known_hosts" \
+                    ! -name "known_hosts.*" \
+                    ! -name "authorized_keys" \
+                    ! -name "config" \
+                    ! -name "*.old" \
+                    ! -name "agent" \
+                    ! -name "*.bak" \
+                    2>/dev/null
+            )
             if [[ ${#ssh_private_keys[@]} -gt 0 ]]; then
                 log_info "Agregando claves SSH detectadas al keyring (se solicitará la passphrase si aplica)..."
                 for key_path in "${ssh_private_keys[@]}"; do
@@ -183,7 +195,7 @@ EOF
                     if ssh-keygen -y -f "$key_path" >/dev/null 2>&1; then
                         log_info "Registrando clave $(basename "$key_path")..."
                         local spinner_was_active=0
-                        if [[ -n "${SPINNER_PID:-}" ]]; then
+                        if [[ ${SPINNER_ACTIVE:-0} -eq 1 ]]; then
                             spinner_was_active=1
                         fi
                         if declare -F pause_spinner >/dev/null; then

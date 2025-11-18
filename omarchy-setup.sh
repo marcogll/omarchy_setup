@@ -32,74 +32,36 @@ source "${MODULES_DIR}/common.sh"
 log_info "Verificando permisos de los módulos..."
 chmod +x "${MODULES_DIR}"/*.sh 2>/dev/null || true
 
-# --- Funciones de UI Mejorada (Spinner y Barra de Progreso) ---
+# --- Funciones de UI Mejorada (Indicador de Progreso) ---
 
-SPINNER_PID=
-SPINNER_DEVICE_ACTIVE=
+SPINNER_ACTIVE=0
 SPINNER_MESSAGE=
 
 spinner_clear_line() {
-    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
-    if [[ ! -w "$device" ]]; then
-        device="/dev/null"
-    fi
-    printf '\r\033[K' >"$device" 2>/dev/null || true
+    :
 }
 
 pause_spinner() {
-    local device="${SPINNER_DEVICE_ACTIVE:-/dev/tty}"
-    if [[ ! -w "$device" ]]; then
-        device="/dev/null"
+    if (( SPINNER_ACTIVE )); then
+        SPINNER_ACTIVE=0
     fi
-    if [[ -n "$SPINNER_PID" ]] && kill -0 "$SPINNER_PID" 2>/dev/null; then
-        kill "$SPINNER_PID" &>/dev/null || true
-        wait "$SPINNER_PID" &>/dev/null || true
-    fi
-    spinner_clear_line
-    printf '\033[?25h' >"$device" 2>/dev/null || true
-    SPINNER_PID=
 }
 
 resume_spinner() {
     if [[ -n "$SPINNER_MESSAGE" ]]; then
-        start_spinner "$SPINNER_MESSAGE"
+        log_info "$SPINNER_MESSAGE"
+        SPINNER_ACTIVE=1
     fi
 }
 
-# Inicia una animación de spinner en segundo plano
-# Uso: start_spinner "Mensaje..."
 start_spinner() {
     local message="$1"
-    if [[ -n "$SPINNER_PID" ]]; then
-        pause_spinner
-    fi
-
-    local device="/dev/tty"
-    if [[ ! -w "$device" ]]; then
-        device="/dev/null"
-    fi
-
-    SPINNER_DEVICE_ACTIVE="$device"
+    pause_spinner
     SPINNER_MESSAGE="$message"
-
-    (
-        local chars="⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏"
-        local dev="$device"
-        local msg="$message"
-        while :; do
-            for (( i=0; i<${#chars}; i++ )); do
-                printf '\r\033[K%s %s' "${CYAN}${chars:$i:1}${NC}" "$msg" >"$dev"
-                sleep 0.1
-            done
-        done
-    ) &
-    SPINNER_PID=$!
-    # Ocultar cursor en la terminal, si es posible
-    printf '\033[?25l' >"$device" 2>/dev/null || true
+    SPINNER_ACTIVE=1
+    log_info "$message"
 }
 
-# Detiene el spinner y muestra un mensaje de finalización
-# Uso: stop_spinner $? "Mensaje de éxito" "Mensaje de error"
 stop_spinner() {
     local exit_code=$1
     local success_msg=$2
@@ -113,7 +75,6 @@ stop_spinner() {
         log_error "$error_msg"
     fi
 
-    SPINNER_DEVICE_ACTIVE=
     SPINNER_MESSAGE=
 }
 
@@ -174,13 +135,14 @@ MODULES=(
     ["5"]="printer;install_printer;🖨️  Configurar Impresoras (CUPS);bg"
     ["6"]="mouse_cursor;install_mouse_cursor;🖱️ Instalar Tema de Cursor (Bibata);bg"
     ["7"]="icon_manager;run_module_main;🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.);fg"
+    ["K"]="ssh-keyring;sync_ssh_keyring;🔐 Sincronizar claves SSH con GNOME Keyring;fg"
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
     ["R"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
 )
 
 # Módulos a incluir en la opción "Instalar Todo"
-INSTALL_ALL_CHOICES=("1" "2" "3" "4" "5" "6" "7" "F" "H")
+INSTALL_ALL_CHOICES=("1" "2" "K" "3" "4" "5" "6" "7" "F" "H")
 
 # Función para mostrar el menú
 show_menu() {
@@ -423,7 +385,7 @@ main() {
             read -p "Presiona Enter para continuar..."
 
         elif [[ "$choice" == "A" ]]; then
-                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, 3, 4, 5, 6, 7, F y H."
+                log_warning "La opción 'Instalar Todo' ejecutará los módulos: 1, 2, K, 3, 4, 5, 6, 7, F y H."
                 log_info "DaVinci Resolve (opción R) no se ejecutará en este lote; instálalo aparte cuando ya tengas el ZIP."
                 echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
