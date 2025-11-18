@@ -1,755 +1,187 @@
-# 🚀 Omarchy Setup Script v3.0.0
+# 🚀 Omarchy Setup Script
 
 Script de instalación y configuración **modular** para **Arch Linux / Omarchy** con menú interactivo.
 
 ## 🎯 Características Principales
 
-- **✅ Estructura Modular**: Scripts independientes para cada componente
-- **🎨 Menú Interactivo**: Selecciona qué instalar según tus necesidades
-- **🌀 Progreso Limpio**: Las tareas en background muestran el estado sin invadir los prompts interactivos
-- **🔐 Sesión Sudo Persistente**: Reutiliza la contraseña durante toda la ejecución para evitar interrupciones
-- **🔧 Fácil de Extender**: Agrega nuevos módulos fácilmente
+- **✅ Estructura Modular**: Scripts independientes para cada componente.
+- **🎨 Menú Interactivo**: Selecciona qué instalar según tus necesidades.
+- **🌀 Progreso Limpio**: Las tareas en background muestran el estado sin invadir los prompts.
+- **🔐 Sesión Sudo Persistente**: Reutiliza la contraseña durante toda la ejecución.
+- **🔧 Fácil de Extender**: Agrega nuevos módulos fácilmente.
 
 ## ⚡ Instalación rápida
 
 ```bash
-# Clonar el repositorio
 git clone https://github.com/marcogll/omarchy_setup.git
 cd omarchy_setup
-
-# Ejecutar el script maestro
 ./omarchy-setup.sh
 ```
 
-## 📦 Estructura Modular
+## 📂 Estructura del Repositorio
 
 ```
-omarchy_zsh_setup/
-├── omarchy-setup.sh          # Script maestro con menú interactivo
-├── modules/
-│   ├── common.sh              # Funciones comunes (colores, logging, etc.)
-│   ├── apps.sh                # Instalación de aplicaciones
-│   ├── zsh-config.sh          # Configuración de Zsh
-│   ├── docker.sh              # Docker y Portainer
-│   ├── zerotier.sh            # ZeroTier VPN
-│   ├── printer.sh             # Configuración de impresoras (CUPS)
-│   ├── mouse_cursor.sh        # Tema de cursor Bibata
-│   ├── icon_manager.sh        # Gestor de temas de iconos
-│   ├── ssh-keyring.sh         # Sincronización de claves SSH con GNOME Keyring
-│   ├── davinci-resolve.sh     # DaVinci Resolve (Intel Edition)
-└── Readme.md
+omarchy_setup/
+├── omarchy-setup.sh      # Script principal con el menú interactivo.
+├── modules/              # Directorio con todos los módulos de instalación.
+│   ├── common.sh         # Funciones compartidas por todos los módulos.
+│   ├── apps.sh           # Instalación de aplicaciones y herramientas.
+│   ├── zsh-config.sh     # Configuración de Zsh, Oh My Zsh y Oh My Posh.
+│   └── ...               # Otros módulos.
+└── hypr_config/          # Configuración de Hyprland (copiada por el módulo).
 ```
 
-## 🎮 Uso del Menú Interactivo
-
-Al ejecutar `./omarchy-setup.sh`, verás un menú con las siguientes opciones:
-
-```
-╔════════════════════════════════════════════════════════════╗
-║  🌀 Omarchy Setup Script — Configuración Modular          ║
-╚════════════════════════════════════════════════════════════╝
-
-Selecciona las opciones que deseas instalar:
-
-  1) 📦 Instalar Aplicaciones (VS Code, VLC, drivers, etc.)
-  2) 🐚 Configurar Zsh (shell, plugins, config)
-  3) 🐳 Instalar Docker y Portainer
-  4) 🌐 Instalar ZeroTier VPN
-  5) 🖨️  Configurar Impresoras (CUPS)
-  6) 🖱️ Instalar Tema de Cursor (Bibata)
-  7) 🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.)
-  K) 🔐 Sincronizar claves SSH con GNOME Keyring
-  F) 💾 Habilitar Formatos FAT/exFAT/NTFS/ext4
-  H) 🎨 Instalar Configuración de Hyprland
-  R) 🎬 Instalar DaVinci Resolve (Intel Edition)
-  A) ✅ Instalar Todo (opciones 1, 2, K, 3, 4, 5, 6, 7, F, H)
-  0) 🚪 Salir
-```
-
-> ℹ️ **Nota:** La opción `A) Instalar Todo` ejecuta los módulos 1, 2, K, 3, 4, 5, 6, 7, F y H. DaVinci Resolve (`R`) no se incluye aquí; instálalo manualmente cuando ya tengas el ZIP en `~/Downloads/`.
-
-> 🌀 **Progreso limpio:** Los módulos en background informan su avance sin animaciones invasivas; toda la salida detallada se imprime limpia y se escribe en `./logs/`.
+---
 
 ## 📋 Módulos Disponibles
 
-### 1. 📦 Aplicaciones (`apps.sh`)
-- Editores como VS Code y Cursor (desde AUR)
-- Configura GNOME Keyring como agente de contraseñas y SSH, iniciando el daemon y exportando `SSH_AUTH_SOCK`
-- Detecta claves privadas en `~/.ssh` y las registra automáticamente con `ssh-add`
-- Instala y habilita servicios complementarios (keyd, logiops, TeamViewer, etc.)
+A continuación se describe cada uno de los módulos que puedes instalar.
 
-### 2. 🐚 Zsh (`zsh-config.sh`)
-- Instala Oh My Zsh y Oh My Posh (Catppuccin Frappe) con autocompletado
-- Clona/actualiza plugins externos como `zsh-autosuggestions` y `zsh-syntax-highlighting` (con fallback al sistema)
-- Modifica `.bashrc` para lanzar Zsh automáticamente
+### 1. Aplicaciones (`apps.sh`)
 
-### 3. 🐳 Docker (`docker.sh`)
-- Instalación de Docker y Docker Compose
-- Configuración de servicios
-- Instalación de Portainer
-- Agregar usuario al grupo docker
+Este módulo instala un conjunto de aplicaciones y herramientas esenciales para un entorno de desarrollo y de escritorio completo.
 
-### 4. 🌐 ZeroTier (`zerotier.sh`)
-- Instalación de ZeroTier One
-- Configuración de servicio
-- Instrucciones para unirse a redes
+- **Qué instala:**
+  - **Herramientas de sistema:** `git`, `curl`, `htop`, `fastfetch`, `stow`, `gnome-keyring`.
+  - **Editores de código:** Visual Studio Code (`visual-studio-code-bin`) y Cursor (`cursor-bin`) desde AUR.
+  - **Multimedia:** VLC, Audacity, Inkscape y `yt-dlp`.
+  - **Red:** FileZilla, Telegram y `speedtest-cli`.
+  - **Drivers de Intel:** Soporte completo para gráficos **Intel Iris Xe**, incluyendo Mesa, Vulkan, VA-API para aceleración de video y OpenCL.
+  - **Utilidades de AUR:** `keyd` (remapeo de teclado), `logiops` (configuración de ratones Logitech), `teamviewer`.
 
-### 5. 🖨️ Impresoras (`printer.sh`)
-- Instalación de CUPS
-- Drivers comunes de impresora
+- **Cómo funciona:**
+  - Instala paquetes desde los repositorios oficiales y AUR.
+  - Configura **GNOME Keyring** para actuar como agente de SSH, cargando automáticamente las claves que encuentre en `~/.ssh`.
+  - Habilita los servicios necesarios para `keyd`, `logiops` y `teamviewer`.
 
-### 6. 🖱️ Tema de Cursor (`mouse_cursor.sh`)
-- Instala el tema de cursor `Bibata-Modern-Ice`.
-- Configura el cursor para Hyprland y aplicaciones GTK.
+### 2. Zsh (`zsh-config.sh`)
 
-### 7. 🎨 Gestor de Iconos (`icon_manager.sh`)
-- Menú interactivo para instalar y cambiar entre temas de iconos como Papirus, Tela y Candy.
+Transforma la terminal con Zsh, Oh My Zsh y Oh My Posh, junto con una configuración personalizada que incluye aliases y funciones útiles.
 
-### K. 🔐 Sincronizar Claves SSH (`ssh-keyring.sh`)
-- Inicia/activa GNOME Keyring para componentes `ssh` y `secrets`
-- Exporta `SSH_AUTH_SOCK` y registra claves desde `~/.ssh` usando `ssh-add`
-- Evita duplicados mediante fingerprints y muestra un resumen al finalizar
+- **Qué instala:**
+  - `zsh` y plugins como `zsh-syntax-highlighting` y `zsh-autosuggestions`.
+  - **Oh My Zsh** para la gestión de la configuración de Zsh.
+  - **Oh My Posh** como motor para el prompt, con el tema **Catppuccin Frappe**.
+  - Herramientas de terminal como `zoxide` para una navegación rápida.
 
-### F. 💾 Soporte de Formatos (`disk-format.sh`)
-- Instala utilidades para FAT32, exFAT, NTFS y ext4
-- Añade herramientas gráficas (GParted, GNOME Disks) para formateo manual
+- **Cómo funciona:**
+  - Instala todas las dependencias y clona los repositorios necesarios.
+  - Reemplaza tu `~/.zshrc` con una versión preconfigurada (creando una copia de seguridad).
+  - Cambia tu shell por defecto a Zsh.
 
-### R. 🎬 DaVinci Resolve (`davinci-resolve.sh`)
-- Configuración de librerías y wrapper
+> **¡Importante!** Después de instalar este módulo, necesitarás instalar una **Nerd Font** para que el prompt se vea bien. El script te recomendará instalar la fuente **Meslo** con el comando: `oh-my-posh font install meslo`.
 
-## 🔧 Ejecutar Módulos Individualmente
+### 3. Docker (`docker.sh`)
 
-Cada módulo puede ejecutarse de forma independiente:
+Instala y configura Docker para la gestión de contenedores.
 
-```bash
-# Instalar solo aplicaciones
-./modules/apps.sh
+- **Qué instala:**
+  - `docker` y `docker-compose`.
+  - (Opcional) **Portainer**, una interfaz web para gestionar Docker.
 
-# Configurar solo Zsh
-./modules/zsh-config.sh
+- **Cómo funciona:**
+  - Habilita el servicio de Docker.
+  - Añade tu usuario al grupo `docker`, lo que te permite ejecutar comandos de Docker sin `sudo` (requiere reiniciar sesión).
+  - Te pregunta si quieres instalar Portainer.
 
-# Sincronizar claves SSH con GNOME Keyring
-./modules/ssh-keyring.sh
+### 4. ZeroTier (`zerotier.sh`)
 
-# Instalar Docker
-./modules/docker.sh
-```
+Instala el cliente de ZeroTier, una herramienta para crear redes virtuales seguras.
 
-## 🌐 Instalación desde URL
+- **Qué instala:**
+  - El paquete `zerotier-one`.
 
-**Nota**: El script requiere que los módulos estén presentes localmente. Se recomienda clonar el repositorio completo.
+- **Cómo funciona:**
+  - Habilita el servicio de ZeroTier.
+  - Te ofrece unirte a una red de ZeroTier de forma interactiva después de la instalación.
 
-```bash
-# Clonar el repositorio
-git clone https://github.com/marcogll/omarchy_setup.git
-cd omarchy_setup
-./omarchy-setup.sh
-```
+### 5. Impresoras (`printer.sh`)
 
----
+Instala y configura el sistema de impresión CUPS.
 
-## ✨ Características de los Módulos
+- **Qué instala:**
+  - `cups`, `cups-pdf` y filtros de impresión.
+  - Drivers de impresión genéricos (`gutenprint`, `foomatic-db`).
+  - Drivers para impresoras **Epson** desde AUR.
+  - `avahi` para la detección de impresoras en red.
 
-### 📦 Aplicaciones
-- **Herramientas base**: git, curl, wget, base-devel, stow
-- **Editores**: 
-  - VS Code (desde AUR: visual-studio-code-bin)
-  - Cursor (desde AUR: cursor-bin)
-- **Multimedia**: 
-  - VLC con todos los plugins (vlc-plugins-all)
-  - Audacity (editor de audio)
-  - Inkscape (editor gráfico vectorial)
-  - ffmpeg, gstreamer con plugins
-  - yt-dlp (descarga de videos)
-- **Red y transferencia**:
-  - FileZilla (cliente FTP)
-  - Telegram Desktop
-  - scrcpy (control Android desde PC)
-- **Utilidades**: neofetch, htop, fastfetch, btop, vim, nano, tmux
-- **Seguridad y sincronización**:
-  - GNOME Keyring + libsecret + Seahorse
-  - Configuración automática del agente SSH y carga de claves en `~/.ssh`
-  - openssh, rsync
-- Recomendado cerrar sesión tras la instalación para que las variables de entorno del keyring se apliquen a nuevas terminales
-- **Flatpak**: Sistema de paquetes universal
-- **Drivers Intel Iris Xe**:
-  - Mesa y Vulkan (gráficos 3D)
-  - Intel Media Driver (aceleración de video VA-API)
-  - OpenCL (Intel Compute Runtime desde AUR)
-  - Codecs y herramientas de hardware acceleration
-- **Desde AUR**:
-  - keyd (remapeo de teclado)
-  - fragments (cliente BitTorrent)
-  - logiops (driver Logitech)
-  - ltunify (Logitech Unifying Receiver)
-  - TeamViewer (acceso remoto, con daemon habilitado)
-  - intel-compute-runtime (OpenCL para Intel)
+- **Cómo funciona:**
+  - Habilita los servicios de `cups` y `avahi`.
+  - Añade tu usuario al grupo `lp` para que puedas administrar impresoras (requiere reiniciar sesión).
 
-### 🐚 Zsh
-- Oh My Zsh + Oh My Posh (tema Catppuccin Frappe)
-- Plugins externos gestionados automáticamente (`zsh-autosuggestions`, `zsh-syntax-highlighting`)
-- Genera el archivo de autocompletado `_oh-my-posh` en `~/.local/share/zsh/site-functions`
-- Modifica `.bashrc` para lanzar Zsh automáticamente
+### 6. Tema de Cursor (`mouse_cursor.sh`)
 
-### 🔐 GNOME Keyring SSH
-- Arranca el daemon de GNOME Keyring con componentes de `ssh` y `secrets`
-- Garantiza que `SSH_AUTH_SOCK` apunte al socket del keyring (persistido en `~/.config/environment.d`)
-- Busca claves privadas en `~/.ssh` (excluyendo `.pub` y certificados) y las registra con `ssh-add`
-- Evita añadir claves duplicadas y muestra cómo verificar con `ssh-add -l`
+Instala un tema de cursor personalizado y lo configura para Hyprland y aplicaciones GTK.
 
-### 🐳 Docker
-- Portainer (interfaz web de gestión)
-- Usuario agregado al grupo docker
-- Servicios habilitados y configurados
+- **Qué instala:**
+  - El tema de cursor **Bibata-Modern-Ice**.
 
-### 🌐 ZeroTier
-- ZeroTier One VPN
-- Servicio configurado y habilitado
-- Instrucciones para unirse a redes
+- **Cómo funciona:**
+  - Descarga el tema y lo instala en `~/.icons`.
+  - Modifica los ficheros de configuración de Hyprland (`envs.conf`) y GTK (`gsettings`).
 
-### 🖨️ Impresoras
-- CUPS (Common Unix Printing System)
-- Drivers comunes de impresora
-- Interfaz web en http://localhost:631
-- Soporte para impresoras de red
+### 7. Gestor de Iconos (`icon_manager.sh`)
 
-### 🎬 DaVinci Resolve
-- Instalación para Intel GPU
-- Configuración de OpenCL
-- Ajuste de librerías del sistema
-- Wrapper para ejecución
+Un menú interactivo para instalar y cambiar entre diferentes temas de iconos.
+
+- **Qué instala (a elección):**
+  - **Tela** (variante Nord).
+  - **Papirus** (estándar o con colores Catppuccin).
+  - **Candy Icons**.
+
+- **Cómo funciona:**
+  - Clona los repositorios de los temas de iconos desde GitHub.
+  - Modifica la configuración de Hyprland (`autostart.conf`) para que el tema sea persistente.
+
+### 8. Sincronizar Claves SSH (`ssh-keyring.sh`)
+
+Añade tus claves SSH existentes al agente de GNOME Keyring para que no tengas que escribir tu passphrase repetidamente.
+
+- **Cómo funciona:**
+  - Inicia el `gnome-keyring-daemon`.
+  - Busca claves privadas en `~/.ssh` y las añade al agente usando `ssh-add`.
+  - Evita añadir claves que ya estén cargadas.
+
+### 9. Soporte de Formatos (`disk-format.sh`)
+
+Instala herramientas para poder leer, escribir y formatear particiones con los sistemas de archivos más comunes.
+
+- **Qué instala:**
+  - `dosfstools` (para FAT), `exfatprogs` (para exFAT) y `ntfs-3g` (para NTFS).
+  - Herramientas gráficas como **GParted** y **GNOME Disks**.
+
+### 10. DaVinci Resolve (`davinci-resolve.sh`)
+
+Un instalador especializado para DaVinci Resolve, enfocado en sistemas con GPUs de Intel.
+
+> **Nota:** Este módulo es complejo y requiere que hayas descargado previamente el fichero ZIP de DaVinci Resolve desde la web de Blackmagic y lo hayas colocado en tu carpeta de `~/Downloads`.
+
+- **Cómo funciona:**
+  - Instala todas las dependencias necesarias, incluyendo librerías de `ocl-icd` y `intel-compute-runtime`.
+  - Extrae el instalador, aplica parches a las librerías con `patchelf` y lo copia todo a `/opt/resolve`.
+  - Crea un script "wrapper" y un acceso directo en el menú de aplicaciones para lanzar el programa con la configuración correcta.
+
+### 11. Configuración de Hyprland (`hyprland-config.sh`)
+
+Instala una configuración personalizada para el gestor de ventanas Hyprland.
+
+- **Cómo funciona:**
+  - Hace una copia de seguridad de tu configuración actual en `~/.config/hypr`.
+  - Copia el contenido de la carpeta `hypr_config` del repositorio a `~/.config/hypr`.
+  - Establece el tema de iconos por defecto (Tela Nord) usando el módulo de gestión de iconos.
 
 ---
 
-## 📦 Paquetes instalados
+## 🔧 Extender el Script
 
-<details>
-<summary>Ver lista completa (click para expandir)</summary>
+Añadir un nuevo módulo es sencillo:
 
-### Sistema Base
-- **zsh**, **zsh-completions**
-- **oh-my-posh-bin** (desde AUR)
-- **git**, **curl**, **wget**
-- **yay** (AUR helper, compilado desde AUR)
-
-### Desarrollo
-- **python**, **python-pip**, **python-virtualenv**
-- **nodejs**, **npm**
-- **go** (Golang)
-- **docker**, **docker-compose**
-- **base-devel** (herramientas de compilación)
-
-### Utilidades de Terminal
-- **eza** (ls mejorado)
-- **bat** (cat mejorado)
-- **zoxide** (cd inteligente)
-- **fastfetch** (info del sistema)
-- **htop**, **btop** (monitores del sistema)
-- **tree** (visualización de directorios)
-
-### Multimedia y Control
-- **yt-dlp**, **ffmpeg**
-- **playerctl**, **brightnessctl**, **pamixer**
-- **audacity**, **inkscape**
-
-### Red y Seguridad
-- **zerotier-one** (desde AUR)
-- **gnome-keyring**, **libsecret**, **seahorse**
-- **lsof**, **net-tools**
-- **teamviewer**
-
-### Utilidades del Sistema
-- **nano**, **unzip**, **tar**
-- **p7zip**, **unrar**
-
-### Instalaciones Adicionales
-- **speedtest-cli** (vía pip)
-
-</details>
-
----
-
-## 🎯 Durante la instalación
-
-El script ejecuta los siguientes pasos:
-
-1. **Verificación de requerimientos** (root, Arch Linux, conexión a Internet)
-2. **Instalación de paquetes base** desde repositorios oficiales
-3. **Instalación de yay** desde AUR (si no está instalado)
-4. **Configuración de Docker** (servicio y permisos de usuario)
-5. **Instalación de Oh My Zsh y plugins**
-6. **Configuración de .zshrc y tema Catppuccin** desde GitHub
-7. **Configuración de TeamViewer** (servicio)
-8. **Instalación de ZeroTier One** desde AUR (opcional)
-9. **Configuración de GNOME Keyring** (opcional)
-10. **Configuración de claves SSH** (opcional)
-
-### Preguntas interactivas:
-
-- **ZeroTier Network ID**: Si deseas unirte a una red ZeroTier (opcional)
-- **GNOME Keyring**: Si deseas configurar el almacén de contraseñas
-- **Claves SSH**: Si deseas añadir claves SSH existentes al agente
-
----
-
-## 🔑 GNOME Keyring
-
-El keyring guarda contraseñas de forma segura:
-- **Git** (credential helper)
-- **SSH keys** (almacenadas de forma segura)
-- **Aplicaciones GNOME**
-
-### Configuración automática:
-
-El script configura automáticamente:
-- PAM para auto-desbloqueo del keyring
-- Inicio automático de gnome-keyring-daemon
-- Integración con SSH agent
-
-### Comandos útiles:
-
-```bash
-# Abrir gestor de contraseñas
-seahorse
-
-# Ver estado del keyring
-gnome-keyring-daemon --version
-
-# Comandos de ZeroTier (aliases en .zshrc)
-zt              # Alias de sudo zerotier-cli
-ztstatus        # Ver redes conectadas (listnetworks)
-ztinfo          # Info del nodo (info)
-```
-
----
-
-## ⚙️ Configuración incluida
-
-### Aliases de Arch Linux
-```bash
-pacu            # Actualizar sistema
-paci <pkg>      # Instalar paquete
-pacr <pkg>      # Remover paquete
-pacs <query>    # Buscar paquete
-yayu            # Actualizar AUR
-yayi <pkg>      # Instalar desde AUR
-```
-
-### Git shortcuts
-```bash
-gs              # git status
-ga              # git add
-gc              # git commit
-gcm "msg"       # git commit -m
-gp              # git push
-gl              # git pull
-gco <branch>    # git checkout
-gcb <branch>    # git checkout -b
-glog            # git log gráfico
-gac "msg"       # add + commit
-```
-
-### Docker
-```bash
-dc              # docker compose
-d               # docker
-dps             # docker ps -a
-di              # docker images
-dex <name> sh   # docker exec -it
-dlog <name>     # docker logs -f
-```
-
-### Python
-```bash
-py              # python
-venv create     # Crear .venv
-venv on         # Activar
-venv off        # Desactivar
-pir             # pip install -r requirements.txt
-pipf            # pip freeze > requirements.txt
-```
-
-### yt-dlp
-```bash
-ytm <URL>           # Descargar audio MP3 320kbps
-ytm "lofi beats"    # Buscar y descargar
-ytv <URL>           # Descargar video MP4 (calidad por defecto)
-ytv <URL> 1080      # Descargar video en 1080p
-ytv <URL> 720       # Descargar video en 720p
-ytls                # Listar últimos descargas
-```
-
-Descargas en: `~/Videos/YouTube/{Music,Videos}/`
-
-### NPM
-```bash
-nrs             # npm run start
-nrd             # npm run dev
-nrb             # npm run build
-nrt             # npm run test
-ni              # npm install
-nid             # npm install --save-dev
-nig             # npm install -g
-```
-
-### Utilidades
-```bash
-mkcd <dir>          # mkdir + cd
-extract <file>      # Extraer cualquier archivo
-killport <port>     # Matar proceso en puerto
-serve [port]        # Servidor HTTP (default 8000)
-clima               # Ver clima Saltillo
-```
-
----
-
-## 🌐 ZeroTier Network ID
-
-Tu Network ID tiene formato: `a0cbf4b62a1234567` (16 caracteres hex)
-
-### Dónde encontrarlo:
-1. Ve a https://my.zerotier.com
-2. Selecciona tu red
-3. Copia el Network ID
-
-### Después de la instalación:
-1. Ve a tu panel de ZeroTier
-2. Busca el nuevo dispositivo
-3. **Autorízalo** marcando el checkbox
-
-### Comandos útiles:
-```bash
-# Ver redes
-ztstatus
-
-# Unirse a red
-sudo zerotier-cli join <network-id>
-
-# Salir de red
-sudo zerotier-cli leave <network-id>
-
-# Info del nodo
-ztinfo
-```
-
----
-
-## 📂 Estructura creada
-
-```
-$HOME/
-├── .zshrc                          # Configuración de Zsh (descargado desde GitHub)
-├── .zshrc.local                   # Config local (opcional, no creado automáticamente)
-├── .oh-my-zsh/                    # Oh My Zsh
-│   └── custom/plugins/            # Plugins adicionales
-│       ├── zsh-autosuggestions/
-│       └── zsh-syntax-highlighting/
-├── .poshthemes/                   # Temas Oh My Posh
-│   └── catppuccin_frappe.omp.json # Tema Catppuccin Frappe
-├── .zsh_functions/                # Funciones personalizadas (directorio creado)
-├── Videos/YouTube/                # Descargas de yt-dlp
-│   ├── Music/                     # Audios MP3
-│   └── Videos/                    # Videos MP4
-├── .ssh/                          # Claves SSH (si existen)
-└── omarchy-setup.log             # Log de instalación
-```
-
----
-
-## 🔄 Después de la instalación
-
-### 1. Reiniciar sesión o terminal (IMPORTANTE)
-
-**⚠️ REINICIO REQUERIDO** si se instalaron servicios como TeamViewer o ZeroTier.
-
-```bash
-# Cerrar y volver a abrir la terminal para usar Zsh
-# O cerrar sesión y volver a entrar para aplicar:
-# - Cambio de shell a Zsh
-# - Grupos (docker)
-# - Permisos del sistema
-```
-
-### 2. Verificar instalación
-
-```bash
-# Ver versión de Zsh
-zsh --version
-
-# Ver tema Oh My Posh
-oh-my-posh version
-
-# Verificar Docker
-docker ps
-
-# Ver ZeroTier (si se configuró)
-ztstatus
-
-# Ver TeamViewer (si se instaló)
-teamviewer info
-
-# Actualizar sistema
-pacu
-```
-
-### 3. Configuraciones opcionales
-
-```bash
-# Crear archivo de configuración local
-nano ~/.zshrc.local
-
-# Ejemplo de contenido:
-export OPENAI_API_KEY="sk-..."
-export GITHUB_TOKEN="ghp_..."
-alias miproyecto="cd ~/Projects/mi-app && code ."
-```
-
----
-
-## 🛠️ Solución de problemas
-
-### Docker no funciona sin sudo
-
-```bash
-# Verificar que estás en el grupo docker
-groups  # Debe incluir 'docker'
-
-# Si no aparece, reinicia sesión o ejecuta:
-newgrp docker
-
-# Verificar acceso
-docker ps
-```
-
-### Git sigue pidiendo contraseña
-
-```bash
-# Verificar credential helper
-git config --global credential.helper
-
-# Debe ser: libsecret
-
-# Si no, configurar:
-git config --global credential.helper libsecret
-
-# Abrir Seahorse y verificar keyring
-seahorse
-
-# Verificar que el keyring está corriendo
-pgrep -u "$USER" gnome-keyring-daemon
-```
-
-### ZeroTier no conecta
-
-```bash
-# Verificar servicio
-sudo systemctl status zerotier-one
-
-# Ver logs
-sudo journalctl -u zerotier-one -f
-
-# Reiniciar servicio
-sudo systemctl restart zerotier-one
-
-# Verificar que autorizaste el nodo en https://my.zerotier.com
-ztinfo
-ztstatus
-```
-
-### Oh My Posh no se muestra correctamente
-
-Para que el tema de Oh My Posh se visualice correctamente, es **esencial** tener instalada una "Nerd Font". Estas fuentes incluyen los íconos y símbolos especiales que usa el prompt.
-
-El script **no** instala fuentes automáticamente, pero puedes hacerlo fácilmente con el siguiente comando:
-
-```bash
-# Instalar la fuente recomendada (Meslo LGM Nerd Font)
-oh-my-posh font install meslo
-```
-
-Después de instalar la fuente, **debes configurar tu emulador de terminal** para que la use. Este paso es crucial y varía según la terminal que utilices (por ejemplo, en GNOME Terminal, Konsole, Alacritty, etc., deberás ir a sus preferencias y seleccionar "MesloLGM Nerd Font").
-
-**Verificaciones adicionales:**
-
-```bash
-# Verificar que oh-my-posh está instalado
-which oh-my-posh
-
-# Verificar que el tema existe
-ls ~/.poshthemes/catppuccin_frappe.omp.json
-
-# Listar fuentes para confirmar que Meslo está instalada
-fc-list | grep -i "meslo"
-```
-
-### El shell no cambió a Zsh
-
-```bash
-# Verificar shell actual
-echo $SHELL
-
-# Cambiar manualmente
-chsh -s $(which zsh)
-
-# Cerrar y abrir nueva terminal
-```
-
----
-
-## 📚 Recursos
-
-- **Arch Wiki**: https://wiki.archlinux.org/
-- **Oh My Zsh**: https://ohmyz.sh/
-- **Oh My Posh**: https://ohmyposh.dev/
-- **Catppuccin Theme**: https://github.com/catppuccin/catppuccin
-- **ZeroTier**: https://www.zerotier.com/
-- **yt-dlp**: https://github.com/yt-dlp/yt-dlp
-- **Nerd Fonts**: https://www.nerdfonts.com/ (requerido para iconos del prompt)
-- **yay AUR Helper**: https://github.com/Jguer/yay
-
----
-
-## 🆘 Soporte
-
-Si encuentras problemas:
-
-1. Revisa los mensajes de error durante la instalación
-2. Verifica que cerraste sesión después de instalar (para aplicar grupos)
-3. Comprueba que los grupos se aplicaron: `groups`
-4. Verifica que los módulos están presentes: `ls modules/`
-5. Ejecuta módulos individualmente para aislar problemas
-6. Abre un issue en: https://github.com/marcogll/scripts_mg/issues
-
-### Verificar Instalación de Módulos
-
-```bash
-# Verificar que todos los módulos existen
-ls -la modules/
-
-# Ejecutar un módulo individual para debug
-bash -x modules/apps.sh
-```
-
----
-
-## 🔧 Agregar Nuevos Módulos
-
-Para agregar un nuevo módulo:
-
-1. Crea un archivo en `modules/nombre-modulo.sh`:
-
-```bash
-#!/usr/bin/env bash
-# ===============================================================
-# nombre-modulo.sh - Descripción del módulo
-# ===============================================================
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "${SCRIPT_DIR}/common.sh"
-
-install_nombre_modulo() {
-    log_step "Instalación de Nombre Módulo"
-    
-    # Tu código aquí
-    log_info "Instalando paquetes..."
-    sudo pacman -S --noconfirm --needed paquete1 paquete2 || {
-        log_error "Error al instalar paquetes"
-        return 1
-    }
-    
-    log_success "Módulo instalado correctamente"
-    return 0
-}
-
-# Ejecutar si se llama directamente
-if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
-    install_nombre_modulo "$@"
-fi
-```
-
-2. Agrega el módulo al menú en `omarchy-setup.sh`:
-
-Dentro del script `omarchy-setup.sh`, localiza el array asociativo `MODULES` y añade una nueva línea.
-
-```bash
-# --- Definición de Módulos ---
-# Clave: Opción del menú
-# Valor: "Nombre del Fichero;Función Principal;Descripción;Tipo (bg/fg)"
-declare -A MODULES
-MODULES=(
-    ["1"]="apps;run_module_main;📦 Instalar Aplicaciones;bg"
-    # ... otros módulos ...
-    ["N"]="nombre-modulo;install_nombre_modulo;🚀 Mi Nuevo Módulo;fg"
-)
-```
-
-- **Clave (`"N"`):** La tecla que el usuario presionará en el menú.
-- **Valor:** Una cadena de texto con 4 partes separadas por punto y coma (`;`):
-    1.  `nombre-modulo`: El nombre del fichero `.sh` sin la extensión.
-    2.  `install_nombre_modulo`: La función dentro de ese fichero que se debe ejecutar.
-    3.  `🚀 Mi Nuevo Módulo`: La descripción que aparecerá en el menú.
-    4.  `fg` o `bg`: `fg` (foreground) para scripts interactivos, `bg` (background) para tareas que pueden usar un spinner.
-
-3. Si quieres incluirlo en la opción "Instalar Todo", añade la clave del menú (en este caso, `"N"`) al array `INSTALL_ALL_CHOICES`.
-
----
-
-## 📝 Changelog
-
-### v3.0.0 (2025-01-XX)
-- ✨ **Nueva estructura modular**: Scripts independientes para cada componente
-- 🎨 **Menú interactivo**: Selecciona qué instalar según tus necesidades
-- 🎨 **Interfaz mejorada**: Colores y mensajes claros durante la instalación
-- 📦 **Módulos disponibles**:
-  - Aplicaciones (apps.sh)
-  - Zsh (zsh-config.sh)
-  - Docker y Portainer (docker.sh)
-  - ZeroTier (zerotier.sh)
-  - Impresoras CUPS (printer.sh)
-  - Tema de Cursor (mouse_cursor.sh)
-  - DaVinci Resolve (davinci-resolve.sh)
-  - Gestor de Iconos (icon_manager.sh)
-
-### v2.8.1 (2025-11-02)
-- Versión unificada con estética Catppuccin
-- Instalación mejorada de paquetes con manejo de errores robusto
-- **oh-my-posh** instalado desde AUR automáticamente
-- Configuración `.zshrc` descargada desde GitHub
+1.  **Crea tu script** en la carpeta `modules/` (ej. `mi-modulo.sh`). Asegúrate de que tenga una función principal.
+2.  **Añádelo al menú** en `omarchy-setup.sh`, dentro del array `MODULES`. Sigue el formato: `"tecla"="nombre-fichero;nombre-funcion;Descripción;tipo"`.
+    -   `tipo` puede ser `bg` (para tareas en segundo plano) o `fg` (para tareas interactivas).
 
 ---
 
 ## 📄 Licencia
 
-MIT License - Libre de usar y modificar
-
----
-
-## 👤 Autor
-
-**Marco**
-- GitHub: [@marcogll](https://github.com/marcogll)
-- Repo: [scripts_mg](https://github.com/marcogll/scripts_mg)
-
----
-
-
-```bash
-# Instalar en una línea
-bash <(curl -fsSL https://raw.githubusercontent.com/marcogll/scripts_mg/main/omarchy_zsh_setup/omarchy-setup.sh)
-```
-
-## 📝 Notas importantes
-
-- **Shell por defecto**: El módulo de Zsh modifica `.bashrc` para que las terminales nuevas usen Zsh.
-
-## 🚀 Próximos Pasos
-
-1. Ejecuta `./omarchy-setup.sh` para ver el menú interactivo
-2. Selecciona los módulos que deseas instalar
-3. Revisa los mensajes durante la instalación
-4. Reinicia o cierra sesión después de instalar servicios
-5. Disfruta de tu configuración personalizada
-
----
-
-🚀 **¡Disfruta tu nuevo setup modular de Omarchy!**
+Este proyecto está bajo la Licencia MIT.
