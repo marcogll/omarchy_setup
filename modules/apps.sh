@@ -6,11 +6,53 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
+ensure_homebrew_env() {
+    local brew_bin="$1"
+    if [[ ! -x "$brew_bin" ]]; then
+        return 1
+    fi
+
+    # Eval shellenv so el resto del módulo pueda usar brew sin reiniciar la shell.
+    eval "$("$brew_bin" shellenv)" || return 1
+
+    local shell_snippet='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
+    local -a appended=()
+    local -a rc_targets=("${HOME}/.profile")
+
+    if [[ -n "${SHELL:-}" && "$(basename "${SHELL}")" == "zsh" ]]; then
+        rc_targets+=("${HOME}/.zprofile")
+    fi
+
+    for rc_file in "${rc_targets[@]}"; do
+        if [[ -f "$rc_file" ]] && grep -Fq "$shell_snippet" "$rc_file"; then
+            continue
+        fi
+        {
+            echo ""
+            echo "# Configuración añadida por Omarchy Setup para inicializar Homebrew"
+            echo "$shell_snippet"
+        } >> "$rc_file"
+        appended+=("$rc_file")
+    done
+
+    if [[ ${#appended[@]} -gt 0 ]]; then
+        log_info "Se añadió la inicialización de Homebrew a: ${appended[*]}."
+    fi
+
+    return 0
+}
+
 install_homebrew() {
     log_step "Instalación de Homebrew (Linuxbrew)"
     
+    local brew_path="/home/linuxbrew/.linuxbrew/bin/brew"
     if command_exists brew; then
+        brew_path="$(command -v brew)"
+    fi
+
+    if command_exists brew || [[ -x "$brew_path" ]]; then
         log_success "Homebrew ya está instalado."
+        ensure_homebrew_env "${brew_path}" || true
         return 0
     fi
     
@@ -18,6 +60,7 @@ install_homebrew() {
     # Instalar de forma no interactiva
     if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         log_success "Homebrew instalado correctamente."
+        ensure_homebrew_env "${brew_path}" || log_warning "Homebrew se instaló pero no se pudo configurar la shell automáticamente."
     else
         log_error "Falló la instalación de Homebrew."
         return 1
