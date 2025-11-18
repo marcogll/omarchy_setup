@@ -125,16 +125,26 @@ aur_install_packages() {
         return 1
     fi
 
-    local -a base_flags=(--noconfirm --needed --noeditmenu --nodiffmenu --nocleanmenu)
+    local -a base_flags=(--noconfirm --needed)
     AUR_HELPER_CMD="$helper"
     local status=0
     case "$helper" in
         yay)
-            "$helper" -S "${base_flags[@]}" --answerdiff None --answerclean All --answeredit None --mflags "--noconfirm" --cleanafter "${packages[@]}"
+            "$helper" -S "${base_flags[@]}" \
+                --answerdiff None \
+                --answerclean All \
+                --answeredit None \
+                --mflags "--noconfirm" \
+                --cleanafter \
+                "${packages[@]}"
             status=$?
             ;;
         paru)
-            "$helper" -S "${base_flags[@]}" --skipreview --cleanafter --mflags "--noconfirm" "${packages[@]}"
+            "$helper" -S "${base_flags[@]}" \
+                --skipreview \
+                --cleanafter \
+                --mflags "--noconfirm" \
+                "${packages[@]}"
             status=$?
             ;;
         *)

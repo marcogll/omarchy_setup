@@ -558,20 +558,28 @@ ztstatus
 
 ### Oh My Posh no se muestra correctamente
 
+Para que el tema de Oh My Posh se visualice correctamente, es **esencial** tener instalada una "Nerd Font". Estas fuentes incluyen los íconos y símbolos especiales que usa el prompt.
+
+El script **no** instala fuentes automáticamente, pero puedes hacerlo fácilmente con el siguiente comando:
+
 ```bash
-# Verificar instalación
+# Instalar la fuente recomendada (Meslo LGM Nerd Font)
+oh-my-posh font install meslo
+```
+
+Después de instalar la fuente, **debes configurar tu emulador de terminal** para que la use. Este paso es crucial y varía según la terminal que utilices (por ejemplo, en GNOME Terminal, Konsole, Alacritty, etc., deberás ir a sus preferencias y seleccionar "MesloLGM Nerd Font").
+
+**Verificaciones adicionales:**
+
+```bash
+# Verificar que oh-my-posh está instalado
 which oh-my-posh
-oh-my-posh version
 
 # Verificar que el tema existe
 ls ~/.poshthemes/catppuccin_frappe.omp.json
 
-# Verificar que tienes una Nerd Font instalada
-# (El script NO instala fuentes automáticamente)
-fc-list | grep -i nerd
-
-# Si no tienes Nerd Font, instala una:
-# - Nerd Fonts: https://www.nerdfonts.com/
+# Listar fuentes para confirmar que Meslo está instalada
+fc-list | grep -i "meslo"
 ```
 
 ### El shell no cambió a Zsh
