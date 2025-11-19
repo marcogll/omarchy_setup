@@ -37,30 +37,23 @@ sync_ssh_keyring() {
 SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
 EOF
 
-    local keyring_eval=""
-    if keyring_eval="$(gnome-keyring-daemon --start --components=ssh,secrets 2>/dev/null)"; then
-        eval "$keyring_eval"
-        log_success "GNOME Keyring iniciado."
-    else
-        log_info "GNOME Keyring ya estaba en ejecución."
-    fi
+    # No intentamos iniciar el daemon. Después de un reinicio de sesión, ya debería estar activo.
+    log_info "Buscando el socket del agente de GNOME Keyring..."
 
+    # Obtenemos el UID del usuario dueño del directorio HOME. Este método es más fiable.
     local target_uid
-    target_uid=$(id -u "$(logname)")
-    local keyring_socket="${SSH_AUTH_SOCK:-/run/user/${target_uid}/keyring/ssh}"
+    target_uid=$(stat -c '%u' "$HOME")
+
+    local keyring_socket="/run/user/${target_uid}/keyring/ssh"
 
     if [[ ! -S "$keyring_socket" ]]; then
-        log_warning "No se encontró el socket de GNOME Keyring en la ruta esperada."
-        # Como fallback, intentamos la ruta con el UID del proceso actual.
-        local fallback_socket="/run/user/$(id -u)/keyring/ssh"
-        if [[ -S "$fallback_socket" ]]; then
-            keyring_socket="$fallback_socket"
-            log_info "Se encontró un socket válido en la ruta de fallback: ${keyring_socket}"
-        else
-            log_error "GNOME Keyring no parece estar exponiendo el socket SSH. Asegúrate de haber reiniciado la sesión."
-            return 1
-        fi
+        log_error "No se encontró el socket de GNOME Keyring en la ruta esperada: ${keyring_socket}"
+        log_warning "Esto usualmente significa que el servicio no se ha iniciado correctamente con tu sesión de escritorio."
+        log_info "Asegúrate de haber cerrado y vuelto a abrir tu sesión después de instalar el módulo de aplicaciones."
+        return 1
     fi
+
+    log_success "Socket de GNOME Keyring encontrado en: ${keyring_socket}"
     export SSH_AUTH_SOCK="$keyring_socket"
 
     local ssh_dir="${HOME}/.ssh"
