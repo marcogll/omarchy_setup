@@ -19,19 +19,36 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
+# ---------------------------------------------------------------
+# ensure_homebrew_env()
+# ---------------------------------------------------------------
+# Asegura que el entorno de Homebrew esté configurado correctamente.
+#
+# Esta función realiza dos tareas principales:
+#   1. Carga Homebrew en la sesión de shell actual para que el comando `brew`
+#      esté disponible inmediatamente después de la instalación.
+#   2. Añade la línea de inicialización de Homebrew a los ficheros de
+#      perfil del usuario (`.profile` y `.zprofile`) para que `brew`
+#      esté disponible en futuras sesiones de terminal.
+#
+# Parámetros:
+#   $1 - Ruta al ejecutable de brew.
+# ---------------------------------------------------------------
 ensure_homebrew_env() {
     local brew_bin="$1"
     if [[ ! -x "$brew_bin" ]]; then
         return 1
     fi
 
-    # Eval shellenv so el resto del módulo pueda usar brew sin reiniciar la shell.
+    # Evalúa `shellenv` para que el resto del módulo pueda usar `brew`
+    # sin necesidad de reiniciar la shell.
     eval "$("$brew_bin" shellenv)" || return 1
 
     local shell_snippet='eval "$(/home/linuxbrew/.linuxbrew/bin/brew shellenv)"'
     local -a appended=()
     local -a rc_targets=("${HOME}/.profile")
 
+    # Si el usuario utiliza Zsh, añade también la configuración a .zprofile.
     if [[ -n "${SHELL:-}" && "$(basename "${SHELL}")" == "zsh" ]]; then
         rc_targets+=("${HOME}/.zprofile")
     fi
@@ -55,6 +72,16 @@ ensure_homebrew_env() {
     return 0
 }
 
+# ---------------------------------------------------------------
+# install_homebrew()
+# ---------------------------------------------------------------
+# Instala Homebrew (conocido como Linuxbrew en Linux).
+#
+# Comprueba si Homebrew ya está instalado. Si no lo está, descarga y
+# ejecuta el script de instalación oficial de forma no interactiva.
+# Después de la instalación, llama a `ensure_homebrew_env` para
+# configurar el entorno de shell.
+# ---------------------------------------------------------------
 install_homebrew() {
     log_step "Instalación de Homebrew (Linuxbrew)"
     
@@ -81,6 +108,31 @@ install_homebrew() {
 }
 
 # ---------------------------------------------------------------
+# install_nvm()
+# ---------------------------------------------------------------
+# Instala NVM (Node Version Manager).
+#
+# Descarga y ejecuta el script de instalación oficial de NVM.
+# ---------------------------------------------------------------
+install_nvm() {
+    log_step "Instalación de NVM (Node Version Manager)"
+
+    if [[ -d "${HOME}/.nvm" ]]; then
+        log_success "NVM ya está instalado."
+        return 0
+    fi
+
+    log_info "Instalando NVM..."
+    if curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash; then
+        log_success "NVM instalado correctamente."
+        log_info "Para usar NVM, reinicia tu terminal o ejecuta: source ~/.nvm/nvm.sh"
+    else
+        log_error "Falló la instalación de NVM."
+        return 1
+    fi
+}
+
+# ---------------------------------------------------------------
 # run_module_main()
 # ---------------------------------------------------------------
 # Función principal del módulo de instalación de aplicaciones.
@@ -97,6 +149,10 @@ run_module_main() {
         git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
         gnome-keyring libsecret seahorse openssh rsync
+    )
+    # Paquetes para desarrollo de software.
+    local PACMAN_DEV=(
+        python python-pip nodejs npm uv
     )
     # Paquetes para reproducción y edición multimedia.
     local PACMAN_MULTIMEDIA=(
@@ -138,7 +194,15 @@ run_module_main() {
         return 1
     }
 
-    # Instalar Homebrew si no está presente.
+    log_info "Instalando herramientas de desarrollo..."
+    sudo pacman -S --noconfirm --needed "${PACMAN_DEV[@]}" || {
+        log_warning "Algunas herramientas de desarrollo no se pudieron instalar"
+    }
+
+    # Instalar NVM
+    install_nvm
+
+    # Instalar Homebrew
     install_homebrew
 
     log_info "Instalando aplicaciones multimedia..."
@@ -249,51 +313,7 @@ EOF
     fi
     log_info "Vuelve a iniciar sesión para que las variables de entorno del keyring se apliquen."
     
-    # Busca claves SSH en ~/.ssh y las añade al agente de GNOME Keyring.
-    if command_exists ssh-add; then
-        local ssh_dir="${HOME}/.ssh"
-        if [[ -d "$ssh_dir" ]]; then
-            # Encuentra todas las claves privadas válidas.
-            mapfile -t ssh_private_keys < <(
-                find "$ssh_dir" -maxdepth 1 -type f -perm -u=r \
-                    ! -name "*.pub" ! -name "*-cert.pub" ! -name "known_hosts" \
-                    ! -name "known_hosts.*" ! -name "authorized_keys" ! -name "config" \
-                    ! -name "*.old" ! -name "agent" ! -name "*.bak" 2>/dev/null
-            )
-            if [[ ${#ssh_private_keys[@]} -gt 0 ]]; then
-                log_info "Agregando claves SSH detectadas al keyring (se solicitará la passphrase si aplica)..."
-                for key_path in "${ssh_private_keys[@]}"; do
-                    if [[ ! -r "$key_path" ]]; then
-                        log_warning "No se puede leer la clave $(basename "$key_path"); revísala manualmente."
-                        continue
-                    fi
-                    # Intenta añadir la clave al agente.
-                    if ssh-keygen -y -f "$key_path" >/dev/null 2>&1; then
-                        log_info "Registrando clave $(basename "$key_path")..."
-                        local spinner_was_active=0
-                        if [[ ${SPINNER_ACTIVE:-0} -eq 1 ]]; then spinner_was_active=1; fi
-                        if declare -F pause_spinner >/dev/null; then pause_spinner; fi
-
-                        if SSH_AUTH_SOCK="$SSH_AUTH_SOCK" ssh-add "$key_path"; then
-                            log_success "Clave $(basename "$key_path") añadida al keyring."
-                        else
-                            log_warning "No se pudo añadir la clave $(basename "$key_path")."
-                        fi
-
-                        if (( spinner_was_active )) && declare -F resume_spinner >/dev/null; then resume_spinner; fi
-                    else
-                        log_warning "La clave $(basename "$key_path") parece inválida. Se omite."
-                    fi
-                done
-            else
-                log_info "No se encontraron claves privadas SSH en ${ssh_dir}."
-            fi
-        else
-            log_info "No se detectó el directorio ~/.ssh; omitiendo carga de claves."
-        fi
-    else
-        log_warning "ssh-add no está disponible; no se pueden registrar claves en el keyring."
-    fi
+    log_info "La sincronización de claves SSH se realizará por separado con el módulo 'K' después de reiniciar la sesión."
     
     # Habilita los servicios de las aplicaciones instaladas.
     if command_exists keyd; then

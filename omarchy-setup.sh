@@ -131,6 +131,7 @@ MODULES=(
     ["5"]="printer;install_printer;🖨️  Configurar Impresoras (CUPS);bg"
     ["6"]="mouse_cursor;install_mouse_cursor;🖱️ Instalar Tema de Cursor (Bibata);bg"
     ["7"]="icon_manager;run_module_main;🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.);fg"
+    ["7D"]="icon_manager;set_default_icon_theme;🎨 Instalar Tema de Iconos por Defecto;bg"
     ["K"]="ssh-keyring;sync_ssh_keyring;🔐 Sincronizar claves SSH con GNOME Keyring;fg"
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
     ["R"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
@@ -144,12 +145,19 @@ EXCLUDED_FROM_ALL=("R")
 get_install_all_choices() {
     local choices=()
     for key in $(printf '%s\n' "${!MODULES[@]}" | sort -V); do
-        # Verificar si la clave no está en el array de exclusión
-        if ! [[ " ${EXCLUDED_FROM_ALL[*]} " =~ " ${key} " ]]; then
+        # Excluir módulos no deseados y el módulo interactivo de iconos
+        if [[ " ${EXCLUDED_FROM_ALL[*]} " =~ " ${key} " || "$key" == "7" ]]; then
+            continue
+        fi
+        # Si el módulo 7D existe, añadirlo en lugar del 7
+        if [[ "$key" == "7D" ]]; then
+            choices+=("7D")
+        elif [[ ! "$key" =~ D$ ]]; then # Evitar añadir otros módulos 'D'
             choices+=("$key")
         fi
     done
-    echo "${choices[@]}"
+    # Asegurarse de que el orden sea consistente
+    printf '%s\n' "${choices[@]}" | sort -V | xargs
 }
 
 # Módulos a incluir en la opción "Instalar Todo"
@@ -164,12 +172,14 @@ show_menu() {
     echo ""
     echo -e "${BOLD}Selecciona las opciones que deseas instalar:${NC}"
     echo ""
-    # Generar menú dinámicamente
-    for key in "${!MODULES[@]}"; do
+    # Generar menú dinámicamente, excluyendo los módulos "D" (Default)
+    for key in $(printf '%s\n' "${!MODULES[@]}" | sort -V); do
+        if [[ "$key" =~ D$ ]]; then
+            continue
+        fi
         IFS=';' read -r _ _ description _ <<< "${MODULES[$key]}"
-        # Asegurarse de que las claves numéricas se ordenen correctamente
         echo -e "  ${GREEN}${key})${NC} ${description}"
-    done | sort -V
+    done
 
     local install_all_keys=$(IFS=,; echo "${INSTALL_ALL_CHOICES[*]}")
     echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (${install_all_keys//,/, }) (excluye DaVinci)"
@@ -307,10 +317,18 @@ install_all() {
     done
     
     if [[ ${#failed[@]} -eq 0 ]]; then
-        log_success "Todas las instalaciones se completaron correctamente"
+        log_success "Todas las instalaciones se completaron correctamente."
     else
         log_warning "Algunos módulos fallaron: ${failed[*]}"
     fi
+
+    echo ""
+    log_step "Pasos Finales Recomendados"
+    log_info "Para completar la configuración, por favor, sigue estos pasos:"
+    echo "1. ${BOLD}Cierra sesión y vuelve a iniciarla.${NC} Esto es crucial para que se activen servicios como Docker y GNOME Keyring."
+    echo "2. ${BOLD}Abre una nueva terminal y ejecuta este script de nuevo.${NC}"
+    echo "3. ${BOLD}Selecciona la opción 'K'${NC} para sincronizar tus claves SSH con el agente de GNOME Keyring."
+    echo ""
 }
 
 # Función principal

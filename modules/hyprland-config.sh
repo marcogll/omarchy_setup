@@ -2,69 +2,55 @@
 # ===============================================================
 # hyprland-config.sh - Instala la configuración personalizada de Hyprland
 # ===============================================================
-#
-# Este módulo se encarga de instalar una configuración personalizada
-# para el gestor de ventanas Hyprland.
-#
-# Funciones principales:
-#   - Realiza una copia de seguridad de la configuración existente de
-#     Hyprland en ~/.config/hypr.
-#   - Copia la nueva configuración desde la carpeta `hypr_config`
-#     del repositorio a ~/.config/hypr.
-#   - Establece un tema de iconos por defecto, utilizando para ello
-#     funciones del módulo `icon_manager.sh`.
-#
-# ===============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
-# Se carga el módulo `icon_manager.sh` para poder utilizar su
-# función `set_default_icon_theme`.
+# Cargar el gestor de iconos para usar sus funciones
 source "${SCRIPT_DIR}/icon_manager.sh"
 
 run_module_main() {
-    log_step "Instalación de la Configuración de Hyprland"
+    log_step "Instalación de Configuración de Hyprland"
 
-    # --- 1. Copia de Archivos de Configuración ---
-    # La configuración que se va a instalar debe estar en una carpeta
-    # llamada `hypr_config` en la raíz del repositorio.
+    # --- 1. Copiar archivos de configuración ---
+    # La configuración de Hyprland debe estar en una carpeta 'hypr_config' en la raíz del repo
     local source_dir="${SCRIPT_DIR}/../hypr_config"
     local dest_dir="$HOME/.config/hypr"
 
     if [[ ! -d "$source_dir" ]]; then
-        log_error "No se encontró el directorio de configuración 'hypr_config'."
-        log_info "Asegúrate de que la carpeta con tu configuración de Hyprland exista en la raíz del repositorio."
+        log_error "No se encontró el directorio de configuración 'hypr_config' en la raíz del repositorio."
+        log_info "Asegúrate de que la carpeta con tu configuración se llame 'hypr_config'."
         return 1
     fi
 
-    # Se crea una copia de seguridad de la configuración existente antes de sobrescribirla.
-    # Se utiliza la función `backup_file` definida en `common.sh`.
-    if ! backup_file "$dest_dir"; then
-        return 1
+    # Crear copia de seguridad si ya existe una configuración
+    if [[ -d "$dest_dir" ]]; then
+        local backup_dir="${dest_dir}.bak_$(date +%F_%T)"
+        log_warning "Configuración de Hyprland existente encontrada."
+        log_info "Creando copia de seguridad en: ${backup_dir}"
+        if mv "$dest_dir" "$backup_dir"; then
+            log_success "Copia de seguridad creada."
+        else
+            log_error "No se pudo crear la copia de seguridad. Abortando."
+            return 1
+        fi
     fi
 
     log_info "Copiando la configuración de Hyprland a ${dest_dir}..."
-    # Se usa `rsync` para una copia eficiente que muestra el progreso.
-    if ! rsync -a --info=progress2 "$source_dir/" "$dest_dir/"; then
-        log_error "No se pudo copiar la configuración de Hyprland."
-        return 1
-    fi
+    # Usamos rsync para una copia eficiente
+    rsync -a --info=progress2 "$source_dir/" "$dest_dir/"
 
-    # --- 2. Establecimiento del Tema de Iconos ---
+    # --- 2. Establecer el tema de iconos por defecto ---
     log_info "Estableciendo el tema de iconos por defecto (Tela Nord)..."
-    # Llama a una función del módulo `icon_manager.sh`.
-    if ! set_default_icon_theme; then
-        log_warning "No se pudo establecer el tema de iconos por defecto."
-        # No es un error fatal, la configuración principal ya se copió.
-    fi
+    # Llamamos a la función específica de icon_manager.sh
+    set_default_icon_theme
 
-    log_success "La configuración de Hyprland se ha instalado correctamente."
-    log_warning "Para que los cambios se apliquen, por favor, cierra sesión y vuelve a iniciarla."
+    log_success "Configuración de Hyprland instalada correctamente."
+    log_warning "Por favor, cierra sesión y vuelve a iniciarla para aplicar los cambios."
     return 0
 }
 
-# Ejecutar si se llama directamente al script.
+# Ejecutar si se llama directamente
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     run_module_main "$@"
 fi
