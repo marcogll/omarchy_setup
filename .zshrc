@@ -1,41 +1,59 @@
 # =============================================================================
-#                    CONFIGURACIÓN ZSH - OMARCHY v2.1
+#           CONFIGURACIÓN ZSH - Marco Gallegos v3.0
+# =============================================================================
+#
+# Este archivo configura el entorno de la terminal Zsh. Incluye la
+# configuración del PATH, la carga de Oh My Zsh, la inicialización de
+# Oh My Posh, y una colección de alias y funciones para mejorar la
+# productividad.
+#
 # =============================================================================
 
 # --- PATH --------------------------------------------------------------------
+# Define las rutas donde el sistema buscará los programas ejecutables.
+# `typeset -U` se asegura de que no haya rutas duplicadas.
 typeset -U PATH path
 path=(
-  $HOME/.local/bin
-  $HOME/bin
-  $HOME/.npm-global/bin
-  $HOME/AppImages
-  $HOME/go/bin
-  $path
+  $HOME/.local/bin   # Scripts y binarios instalados por el usuario.
+  $HOME/bin           # Directorio personal de binarios.
+  $HOME/.npm-global/bin # Paquetes de Node.js instalados globalmente.
+  $HOME/AppImages     # Aplicaciones en formato AppImage.
+  $HOME/go/bin        # Binarios de Go.
+  $path               # Rutas del sistema existentes.
 )
 
 # --- Oh My Zsh ---------------------------------------------------------------
+# Configuración y carga del framework Oh My Zsh.
 export ZSH="$HOME/.oh-my-zsh"
-ZSH_THEME="" # Oh My Posh manejará el prompt, así que el tema de OMZ queda vacío.
+# El tema se deja vacío porque Oh My Posh se encargará de gestionar el prompt.
+ZSH_THEME=""
 
+# Lista de plugins de Oh My Zsh a cargar.
 plugins=(
   git sudo history colorize
   docker docker-compose
   npm node python pip golang
   copypath copyfile
-  # Si usas zoxide, no lo añadas aquí, se inicializa más abajo
 )
 
+# Desactiva la comprobación de seguridad de Oh My Zsh para directorios
+# con permisos de escritura para otros usuarios, lo que puede ser molesto.
 export ZSH_DISABLE_COMPFIX=true
+# Configuración de la caché de autocompletado para mejorar el rendimiento.
 zstyle ':completion::complete:*' use-cache on
 zstyle ':completion::complete:*' cache-path "$HOME/.zcompcache"
+# Hace que el autocompletado no distinga entre mayúsculas y minúsculas.
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'
+# Habilita colores en el menú de autocompletado.
 zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
 zstyle ':completion:*' menu select
 
-# Cargar Oh My Zsh
+# Carga Oh My Zsh.
 [ -r "$ZSH/oh-my-zsh.sh" ] && source "$ZSH/oh-my-zsh.sh"
 
-# Cargar plugins específicos (zsh-autosuggestions y zsh-syntax-highlighting)
+# Carga los plugins de resaltado de sintaxis y autosugerencias.
+# Intenta cargar la versión instalada con Oh My Zsh y, si no la encuentra,
+# busca la versión instalada en el sistema.
 [ -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
   source "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh"
 if [ ! -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh" ] && \
@@ -51,33 +69,34 @@ if [ ! -r "${ZSH_CUSTOM:-$ZSH/custom}/plugins/zsh-syntax-highlighting/zsh-syntax
 fi
 
 # --- Oh My Posh --------------------------------------------------------------
-# Asegúrate de que Oh My Posh esté instalado y el tema 'catppuccin_frappe.omp.json'
-# esté en ~/.poshthemes/
+# Inicializa Oh My Posh para personalizar el prompt.
 if command -v oh-my-posh >/dev/null 2>&1; then
+  # Carga el tema Catppuccin Frappe si existe.
   if [ -f ~/.poshthemes/catppuccin_frappe.omp.json ]; then
     eval "$(oh-my-posh init zsh --config ~/.poshthemes/catppuccin_frappe.omp.json)"
   else
-    # Fallback si el tema Catppuccin Frappe no se encuentra
+    # Si no, carga el tema por defecto.
     eval "$(oh-my-posh init zsh)"
-    echo "Advertencia: Tema Catppuccin Frappe para Oh My Posh no encontrado en ~/.poshthemes/. Usando el tema por defecto."
   fi
 fi
 
 # --- Go ----------------------------------------------------------------------
+# Configura las variables de entorno para el lenguaje de programación Go.
 export GOPATH="$HOME/go"
 export GOBIN="$GOPATH/bin"
 
-# --- NVM ---------------------------------------------------------------------
-# Es importante que NVM se cargue después de la configuración de PATH,
-# pero antes de que intentes usar 'node' o 'npm'.
+# --- NVM (Node Version Manager) ----------------------------------------------
+# Carga NVM para gestionar múltiples versiones de Node.js.
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" # Esto carga nvm
-[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion" # Esto carga nvm bash_completion
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
 # --- Python ------------------------------------------------------------------
+# Alias para usar las versiones 3 de python y pip por defecto.
 alias pip='pip3'
 alias python='python3'
 
+# Función para gestionar entornos virtuales de Python.
 venv() {
   case "$1" in
     create) python -m venv .venv && echo "✅ Entorno virtual creado en ./.venv" ;;
@@ -102,6 +121,9 @@ venv() {
 }
 
 # --- Aliases -----------------------------------------------------------------
+# Colección de atajos para comandos comunes.
+
+# Generales
 alias cls='clear'
 alias ll='ls -alF'
 alias la='ls -A'
@@ -110,17 +132,17 @@ alias ..='cd ..'
 alias ...='cd ../..'
 alias ....='cd ../../..'
 
-# System info
-alias ff='fastfetch' # Requiere fastfetch
-alias nf='fastfetch' # Requiere fastfetch
+# Información del sistema
+alias ff='fastfetch'
+alias nf='fastfetch'
 
-# Arch Linux (si aplica)
+# Gestión de paquetes en Arch Linux
 alias pacu='sudo pacman -Syu'
 alias paci='sudo pacman -S'
 alias pacr='sudo pacman -Rns'
 alias pacs='pacman -Ss'
-alias yayu='yay -Syu' # Requiere yay AUR helper
-alias yayi='yay -S'   # Requiere yay AUR helper
+alias yayu='yay -Syu' # Requiere yay
+alias yayi='yay -S'   # Requiere yay
 
 # Git
 alias gs='git status'
@@ -137,7 +159,7 @@ alias glog='git log --oneline --graph --decorate'
 gac(){ git add . && git commit -m "$1"; }
 
 # Docker
-# Detecta si se usa 'docker compose' o 'docker-compose'
+# Detecta si se usa `docker compose` (nuevo) o `docker-compose` (antiguo).
 docker compose version >/dev/null 2>&1 && alias dc='docker compose' || alias dc='docker-compose'
 alias d='docker'
 alias dps='docker ps -a'
@@ -165,43 +187,59 @@ alias zt='sudo zerotier-cli'
 alias ztstatus='sudo zerotier-cli listnetworks'
 alias ztinfo='sudo zerotier-cli info'
 
-# Clima (requiere curl)
+# Utilidades
 alias clima='curl wttr.in/Saltillo'
 
+# --- IA y ChatGPT ------------------------------------------------------------
+# Alias para un cliente de ChatGPT en la terminal (ej. 'chatgpt-cli').
+# Reemplaza 'chatgpt-cli' por el nombre del programa que uses.
+#
+# alias chat='chatgpt-cli'
+# alias chat-q='chatgpt-cli -q' # Para una pregunta rápida sin guardar en el historial.
+# alias chat-c='chatgpt-cli --continue' # Para continuar la conversación anterior.
+# alias chat-code='chatgpt-cli --code' # Para preguntas de código.
+
 # --- Funciones ---------------------------------------------------------------
+# Funciones personalizadas para tareas comunes.
+
+# Crea un directorio y se mueve a él.
 mkcd(){ mkdir -p "$1" && cd "$1"; }
 
+# Extrae cualquier tipo de archivo comprimido.
 extract(){
   [ ! -f "$1" ] && echo "No es un archivo" && return 1
   case "$1" in
     *.tar.bz2) tar xjf "$1" ;;
     *.tar.gz) tar xzf "$1" ;;
     *.bz2) bunzip2 "$1" ;;
-    *.rar) unrar e "$1" ;; # Requiere 'unrar'
+    *.rar) unrar e "$1" ;;
     *.gz) gunzip "$1" ;;
     *.tar) tar xf "$1" ;;
     *.tbz2) tar xjf "$1" ;;
     *.tgz) tar xzf "$1" ;;
     *.zip) unzip "$1" ;;
     *.Z) uncompress "$1" ;;
-    *.7z) 7z x "$1" ;; # Requiere '7zip'
-    *) echo "No se puede extraer '$1': formato no reconocido o herramienta no instalada." ;;
+    *.7z) 7z x "$1" ;;
+    *) echo "No se puede extraer '$1': formato no reconocido." ;;
   esac
 }
 
+# Mata el proceso que esté usando un puerto específico.
 killport(){
   [ $# -eq 0 ] && echo "Uso: killport <puerto>" && return 1
-  local pid=$(lsof -ti:"$1" 2>/dev/null) # Requiere 'lsof'
+  local pid=$(lsof -ti:"$1" 2>/dev/null)
   [ -n "$pid" ] && kill -9 "$pid" && echo "✅ Proceso en puerto $1 eliminado (PID: $pid)" || echo "🤷 No se encontró ningún proceso en el puerto $1"
 }
 
+# Inicia un servidor HTTP simple en el directorio actual.
 serve(){ python -m http.server "${1:-8000}"; }
 
-# --- yt-dlp MEJORADO ---------------------------------------------------------
-# Requiere yt-dlp instalado
+# --- yt-dlp (Descargador de vídeos) ------------------------------------------
+# Funciones mejoradas para descargar audio y video desde YouTube.
 export YTDLP_DIR="$HOME/Videos/YouTube"
-mkdir -p "$YTDLP_DIR"/{Music,Videos} 2>/dev/null # Crear directorios si no existen
+mkdir -p "$YTDLP_DIR"/{Music,Videos} 2>/dev/null
 
+# Descarga audio en formato MP3.
 ytm() {
   case "$1" in
     -h|--help|'')
@@ -239,6 +277,7 @@ ytm() {
   [ $? -eq 0 ] && echo "✅ Audio descargado en: $YTDLP_DIR/Music/" || echo "❌ Falló la descarga de audio."
 }
 
+# Descarga vídeo en formato MP4.
 ytv() {
   case "$1" in
     -h|--help|'')
@@ -287,6 +326,7 @@ ytv() {
   [ $? -eq 0 ] && echo "✅ Video descargado en: $YTDLP_DIR/Videos/" || echo "❌ Falló la descarga de video."
 }
 
+# Lista los últimos archivos descargados.
 ytls() {
   echo "🎵 Últimos 5 audios descargados en Music:"
   ls -1t "$YTDLP_DIR/Music" 2>/dev/null | head -5 | sed 's/^/  /' || echo "  (vacío)"
@@ -295,8 +335,8 @@ ytls() {
   ls -1t "$YTDLP_DIR/Videos" 2>/dev/null | head -5 | sed 's/^/  /' || echo "  (vacío)"
 }
 
-# --- GNOME Keyring -----------------------------------------------------------
-# Iniciar gnome-keyring-daemon si la sesión es gráfica y no está corriendo
+# --- GNOME Keyring y Agente SSH ----------------------------------------------
+# Configuración para que GNOME Keyring gestione las claves SSH.
 if [ -n "$DESKTOP_SESSION" ] && command -v gnome-keyring-daemon >/dev/null 2>&1; then
   if ! pgrep -u "$USER" gnome-keyring-daemon > /dev/null 2>&1; then
     eval "$(gnome-keyring-daemon --start --components=pkcs11,secrets,ssh 2>/dev/null)" || true
@@ -304,8 +344,7 @@ if [ -n "$DESKTOP_SESSION" ] && command -v gnome-keyring-daemon >/dev/null 2>&1;
   export SSH_AUTH_SOCK GPG_AGENT_INFO GNOME_KEYRING_CONTROL GNOME_KEYRING_PID
 fi
 
-# --- SSH Agent ---------------------------------------------------------------
-# Iniciar ssh-agent si no está corriendo y manejar las llaves SSH
+# Fallback a un agente SSH estándar si GNOME Keyring no está disponible.
 if [ -z "$SSH_AUTH_SOCK" ]; then
   export SSH_AGENT_DIR="$HOME/.ssh/agent"
   mkdir -p "$SSH_AGENT_DIR"
@@ -343,10 +382,10 @@ if [ -z "$SSH_AUTH_SOCK" ]; then
   fi
 fi
 
-# Alias útiles para SSH
-alias ssh-list='ssh-add -l'                    # Listar llaves cargadas
-alias ssh-clear='ssh-add -D'                   # Limpiar todas las llaves
-alias ssh-reload='                             # Recargar todas las llaves
+# Alias para gestionar el agente SSH.
+alias ssh-list='ssh-add -l'
+alias ssh-clear='ssh-add -D'
+alias ssh-reload='
   ssh-add -D 2>/dev/null
   for key in ~/.ssh/*; do
     if [ -f "$key" ] && [[ ! "$key" =~ \.pub$ ]] && ssh-keygen -l -f "$key" &>/dev/null; then
@@ -354,50 +393,36 @@ alias ssh-reload='                             # Recargar todas las llaves
     fi
   done
 '
-
-alias ssh-github='ssh -T git@github.com'       # Test GitHub connection
+alias ssh-github='ssh -T git@github.com'
 
 # --- zoxide ------------------------------------------------------------------
-# Reemplazo inteligente de cd (requiere zoxide)
+# Reemplazo inteligente de `cd` que recuerda los directorios que visitas.
 if command -v zoxide >/dev/null 2>&1; then
   eval "$(zoxide init zsh)"
-  
-  # zoxide se integra con 'cd'. Para usarlo de forma explícita o interactiva,
-  # puedes usar 'z' y 'zi'.
   alias zz='z -'   # Ir al directorio anterior
   alias zi='zi'    # Modo interactivo
-else
-  echo "Advertencia: zoxide no está instalado. Instálalo para usar 'z', 'zi', 'zz'."
 fi
 
-
 # --- Historial de Zsh --------------------------------------------------------
-HISTSIZE=100000        # Número de comandos guardados en el historial en RAM
-SAVEHIST=100000        # Número de comandos guardados en el archivo de historial
-HISTFILE=~/.zsh_history # Archivo donde se guarda el historial
-setopt APPEND_HISTORY   # Añadir nuevos comandos al archivo de historial
-setopt SHARE_HISTORY    # Compartir historial entre sesiones de Zsh
-setopt HIST_IGNORE_DUPS # No guardar comandos duplicados consecutivamente
-setopt HIST_IGNORE_ALL_DUPS # No guardar comandos duplicados en el historial
-setopt HIST_IGNORE_SPACE    # No guardar comandos que comienzan con espacio
-setopt AUTO_CD          # Si se introduce un directorio, cambiar a él
-setopt EXTENDED_GLOB    # Habilitar características de expansión de comodines extendidas
+# Configuración para un historial de comandos más útil y persistente.
+HISTSIZE=100000
+SAVEHIST=100000
+HISTFILE=~/.zsh_history
+setopt APPEND_HISTORY SHARE_HISTORY HIST_IGNORE_DUPS HIST_IGNORE_ALL_DUPS HIST_IGNORE_SPACE AUTO_CD EXTENDED_GLOB
 
-stty -ixon 2>/dev/null # Deshabilita CTRL+S (pause) y CTRL+Q (resume)
+# Deshabilita el bloqueo de la terminal con CTRL+S.
+stty -ixon 2>/dev/null
 
-export LESS='-R' # Habilita colores en man pages y less
+# Habilita colores en `man` y `less`.
+export LESS='-R'
 
-# --- Funciones externas ------------------------------------------------------
-# Cargar cualquier archivo .zsh que se encuentre en ~/.zsh_functions/
+# --- Funciones y Configuraciones Locales -------------------------------------
+# Carga archivos de funciones personalizadas desde ~/.zsh_functions/
 [ -d "$HOME/.zsh_functions" ] || mkdir -p "$HOME/.zsh_functions"
 for func_file in "$HOME/.zsh_functions"/*.zsh(N); do
   source "$func_file"
 done
 
-# --- Local Overrides ---------------------------------------------------------
-# Permite tener un archivo ~/.zshrc.local para configuraciones personales
-# sin modificar el archivo principal. Este archivo se cargará al final.
+# Carga un archivo de configuración local (~/.zshrc.local) si existe.
+# Ideal para añadir variables de entorno y configuraciones privadas.
 [ -f ~/.zshrc.local ] && source ~/.zshrc.local
-
-# Mensaje de bienvenida (opcional, puedes borrarlo)
-#echo "🌈 Zsh está configurado con Catppuccin Frappe. ¡Disfruta!"
