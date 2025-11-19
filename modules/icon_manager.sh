@@ -1,62 +1,31 @@
 #!/usr/bin/env bash
-# ===============================================================
-# icon_manager.sh - Gestor de Temas de Iconos para Hyprland
-# ===============================================================
+# icon_manager.sh (v2)
 #
-# Este módulo proporciona una interfaz interactiva para instalar y
-# cambiar entre diferentes temas de iconos. Está diseñado para
-# integrarse con Hyprland, modificando su fichero de autostart
-# para asegurar que la configuración del tema de iconos sea persistente
-# entre sesiones.
+# Un script de gestión para instalar y cambiar entre diferentes temas de iconos
+# en un entorno Hyprland/Omarchy. Incluye temas base y personalizaciones.
 #
-# Dependencias: git, gsettings (parte de glib2).
-#
-# ===============================================================
 
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 # --- Variables Globales ---
-# Ruta al fichero de autostart de Hyprland donde se guardará la configuración.
 AUTOSTART_FILE="$HOME/.config/hypr/autostart.conf"
-# Directorio estándar para iconos instalados por el usuario.
 ICON_DIR_USER="$HOME/.local/share/icons"
 
 # --- Funciones de Utilidad ---
 
-# ---------------------------------------------------------------
-# check_deps()
-# ---------------------------------------------------------------
-# Verifica que las dependencias necesarias (git y gsettings)
-# estén instaladas en el sistema.
-# ---------------------------------------------------------------
+# Función para verificar dependencias
 check_deps() {
     if ! command_exists git; then
-        log_error "El comando 'git' no está instalado. Por favor, instálalo para continuar (ej. sudo pacman -S git)."
-        return 1
-    fi
-    if ! command_exists gsettings; then
-        log_error "El comando 'gsettings' no está instalado. Es parte de 'glib2' y es esencial."
+        log_error "git no está instalado. Por favor, instálalo para continuar (ej. sudo pacman -S git)."
         return 1
     fi
     return 0
 }
 
-# ---------------------------------------------------------------
-# apply_theme(theme_name)
-# ---------------------------------------------------------------
-# Aplica un tema de iconos y lo hace persistente.
-#
-# Esta función realiza dos acciones:
-#   1. Modifica el fichero de autostart de Hyprland (`autostart.conf`)
-#      para que el tema se cargue automáticamente en cada inicio de sesión.
-#   2. Aplica el tema en la sesión actual usando `gsettings` para
-#      que el cambio sea visible de inmediato.
-#
-# Parámetros:
-#   $1 - Nombre exacto del tema de iconos a aplicar.
-# ---------------------------------------------------------------
+# Función para aplicar la configuración de forma persistente
+# Argumento 1: Nombre del tema de iconos (ej. 'Tela-nord-dark')
 apply_theme() {
     local theme_name="$1"
     log_info "Aplicando el tema de iconos '$theme_name'..."
@@ -64,10 +33,10 @@ apply_theme() {
     mkdir -p "$(dirname "$AUTOSTART_FILE")"
     touch "$AUTOSTART_FILE"
 
-    # Elimina configuraciones anteriores del tema de iconos para evitar duplicados.
+    # Eliminar cualquier configuración de icon-theme anterior para evitar conflictos
     sed -i '/exec-once = gsettings set org.gnome.desktop.interface icon-theme/d' "$AUTOSTART_FILE"
 
-    # Añade un bloque de configuración si no existe.
+    # Añadir el bloque de configuración si no existe
     if ! grep -Fq "CONFIGURACIÓN DE TEMA DE ICONOS" "$AUTOSTART_FILE"; then
         echo -e "\n# -----------------------------------------------------" >> "$AUTOSTART_FILE"
         echo "# CONFIGURACIÓN DE TEMA DE ICONOS" >> "$AUTOSTART_FILE"
@@ -76,18 +45,18 @@ apply_theme() {
         echo "exec-once = sleep 1" >> "$AUTOSTART_FILE"
     fi
     
-    # Añade el comando para establecer el tema seleccionado.
+    # Añadir el comando gsettings para el tema seleccionado
     echo "exec-once = gsettings set org.gnome.desktop.interface icon-theme '$theme_name'" >> "$AUTOSTART_FILE"
 
-    # Aplica el tema en la sesión actual.
+    # Aplicar el tema en la sesión actual para un efecto inmediato
     gsettings set org.gnome.desktop.interface icon-theme "$theme_name"
 
-    log_success "¡Tema configurado! Se aplicó en la sesión actual y se guardó en $AUTOSTART_FILE."
+    log_success "¡Tema configurado! Se aplicó en la sesión actual y se guardó en $AUTOSTART_FILE"
 }
 
 # --- Funciones de Instalación de Temas ---
 
-# Asegura que el tema base de Papirus esté instalado, ya que otros temas lo usan como base.
+# Función auxiliar para asegurar que el tema base Papirus esté instalado
 ensure_papirus_installed() {
     local temp_dir="$1"
     if [[ ! -d "$ICON_DIR_USER/Papirus-Dark" ]]; then
@@ -99,16 +68,19 @@ ensure_papirus_installed() {
     fi
 }
 
-# Instala el tema 'Tela-nord-dark', que se usa como predeterminado en la configuración de Hyprland.
+# Función para instalar y aplicar el tema Tela Nord (usado como default)
+# Argumento 1 (opcional): Directorio temporal a utilizar.
 set_default_icon_theme() {
     local theme_name="Tela-nord-dark"
-    local temp_dir_param="${1:-}"
-    log_step "Gestionando el tema de iconos por defecto '$theme_name'"
+    local temp_dir_param="${1:-}" # Aceptar directorio temporal como parámetro
+    log_info "Gestionando el tema de iconos por defecto '$theme_name'..."
 
     if [[ -d "$ICON_DIR_USER/$theme_name" ]]; then
         log_info "El tema '$theme_name' ya está instalado."
     else
         log_info "Instalando el tema '$theme_name'..."
+        # Si no se pasa un directorio, crear uno propio y limpiarlo.
+        # Si se pasa, usarlo sin limpiarlo (la función llamadora se encarga).
         local temp_dir="${temp_dir_param}"
         [[ -z "$temp_dir" ]] && temp_dir=$(mktemp -d)
 
@@ -120,23 +92,22 @@ set_default_icon_theme() {
     apply_theme "$theme_name"
 }
 
-# Instala la versión estándar del tema Papirus.
 install_papirus_standard() {
     local theme_name="Papirus-Dark"
     local temp_dir="$1"
-    log_step "Gestionando Papirus Icons (Estándar)"
+    echo "--- Gestionando Papirus Icons (Estándar) ---"
     ensure_papirus_installed "$temp_dir"
+    # Si el usuario quiere el Papirus estándar, restauramos los colores por si acaso
     if command_exists papirus-folders; then
         papirus-folders --default --theme "$theme_name"
     fi
     apply_theme "$theme_name"
 }
 
-# Instala el tema Candy.
 install_candy() {
     local theme_name="Candy"
     local temp_dir="$1"
-    log_step "Gestionando Candy Icons"
+    echo "--- Gestionando Candy Icons ---"
     if [[ -d "$ICON_DIR_USER/$theme_name" ]]; then
         log_info "El tema ya está instalado."
     else
@@ -147,23 +118,24 @@ install_candy() {
     apply_theme "$theme_name"
 }
 
-# Instala el tema Papirus con colores de la paleta Catppuccin.
 install_papirus_catppuccin() {
     local theme_name="Papirus-Dark"
     local catppuccin_flavor="mocha"
     local temp_dir="$1"
 
-    log_step "Gestionando Papirus Icons con colores Catppuccin ($catppuccin_flavor)"
+    echo "--- Gestionando Papirus Icons con colores Catppuccin ($catppuccin_flavor) ---"
     
     ensure_papirus_installed "$temp_dir"
 
+    # 2. Descargar y ejecutar el script de personalización
     log_info "Descargando y aplicando el colorizador Catppuccin..."
     git clone --depth 1 https://github.com/catppuccin/papirus-folders.git "$temp_dir/papirus-folders-catppuccin"
     chmod +x "$temp_dir/papirus-folders-catppuccin/papirus-folders"
     
-    # Ejecuta el script para cambiar el color de las carpetas.
+    # Ejecutar el script para cambiar el color de las carpetas
     "$temp_dir/papirus-folders-catppuccin/papirus-folders" -C "catppuccin-${catppuccin_flavor}" --theme "$theme_name"
 
+    # 3. Aplicar el tema (el nombre sigue siendo Papirus-Dark, pero los iconos han cambiado)
     apply_theme "$theme_name"
 }
 
@@ -195,6 +167,7 @@ run_module_main() {
         echo
         read -p "Tu elección: " choice
 
+        # Limpiar el directorio temporal para la nueva operación
         rm -rf -- "$temp_dir"/*
 
         case $choice in
@@ -216,7 +189,6 @@ run_module_main() {
     return 0
 }
 
-# Ejecutar si se llama directamente al script.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     run_module_main "$@"
 fi

@@ -2,64 +2,43 @@
 # ===============================================================
 # davinci-resolve.sh - Instalador de DaVinci Resolve (Intel Edition)
 # ===============================================================
-#
-# Este módulo automatiza la instalación y configuración de DaVinci
-# Resolve en Arch Linux, con un enfoque específico en sistemas que
-# utilizan GPUs de Intel. El proceso es complejo y requiere la
-# instalación de múltiples dependencias, la configuración de
-# librerías y la creación de un script "wrapper" para asegurar que
-# la aplicación se ejecute con el entorno correcto.
-#
-# ===============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
 # --- Definición de Dependencias ---
-# Paquetes de los repositorios oficiales de Arch necesarios para Resolve.
+# Paquetes de los repositorios oficiales de Arch
 PACMAN_DEPS=(
-    # Herramientas básicas para la instalación.
+    # Herramientas básicas
     unzip patchelf libarchive xdg-user-dirs desktop-file-utils file rsync
-    # Dependencias directas de Resolve.
+    # Dependencias de Resolve
     libpng libtiff libcurl ocl-icd libxcrypt-compat ffmpeg glu gtk2 fuse2
-    # Dependencias de Qt5, usadas por la interfaz de Resolve.
+    # Dependencias de Qt
     qt5-base qt5-svg qt5-x11extras
-    # Drivers y herramientas de Intel para aceleración por hardware.
+    # Drivers y herramientas Intel
     intel-media-driver libva-utils libvdpau-va-gl clinfo
 )
 
-# Paquetes del AUR.
+# Paquetes del AUR
 AUR_DEPS=(
-    # Runtime de OpenCL para GPUs de Intel. Esencial para el renderizado.
-    "intel-compute-runtime"
+    "intel-compute-runtime" # Runtime OpenCL para GPUs Intel
 )
 
-# --- Definición de Rutas ---
+# Directorio de descargas y nombre del ejecutable
 DOWNLOADS_DIR="${HOME}/Downloads"
 INSTALL_DIR="/opt/resolve"
 WRAPPER_PATH="/usr/local/bin/resolve-intel"
 
-# ---------------------------------------------------------------
-# show_progress(total_items, current_item, message, last_percent)
-# ---------------------------------------------------------------
-# Muestra una barra de progreso simple en la terminal.
-# Está diseñada para ser llamada en un bucle y actualiza la línea
-# solo cuando el porcentaje cambia para ser más eficiente.
-#
-# Parámetros:
-#   $1 - Número total de ítems a procesar.
-#   $2 - Ítem actual que se está procesando.
-#   $3 - Mensaje a mostrar junto a la barra.
-#   $4 - (Opcional) El último porcentaje mostrado.
-# ---------------------------------------------------------------
+# Función para mostrar una barra de progreso
+# Uso: show_progress TOTAL_ITEMS CURRENT_ITEM "Mensaje"
 show_progress() {
     local total=$1
     local current=$2
     local msg=$3
-    local last_percent=${4:-"-1"}
+    local last_percent=${4:-"-1"} # Nuevo: Almacena el último porcentaje mostrado
     local percent=$((current * 100 / total))
     
-    # Solo actualiza si el porcentaje ha cambiado.
+    # Solo actualizar la barra si el porcentaje ha cambiado
     if [[ "$percent" -gt "$last_percent" ]]; then
         local completed_len=$((percent / 2))
         local bar=""
@@ -67,28 +46,25 @@ show_progress() {
         local empty_len=$((50 - completed_len))
         for ((i=0; i<empty_len; i++)); do bar+=" "; done
         
+        # Asegurarse de que el cursor esté al principio de la línea y la limpie
         echo -ne "\r\033[K"
+        # Imprimir la barra de progreso
         echo -ne "  ${GREEN}[${bar}]${NC} ${percent}% - ${msg} (${current}/${total})"
     fi
 
     if [[ $current -eq $total ]]; then
-        echo "" # Nueva línea al finalizar.
+        echo "" # Nueva línea al final
     fi
-    echo "$percent" # Devuelve el porcentaje actual.
+    echo "$percent" # Devolver el porcentaje actual para la siguiente iteración
 }
 
-# ---------------------------------------------------------------
-# install_davinci_resolve()
-# ---------------------------------------------------------------
-# Función principal que orquesta todo el proceso de instalación.
-# ---------------------------------------------------------------
 install_davinci_resolve() {
     log_step "Iniciando instalación de DaVinci Resolve (Intel Edition)"
 
     # --- 1. Verificaciones Previas ---
     log_info "Realizando verificaciones previas..."
 
-    # Comprueba que el archivo ZIP de DaVinci Resolve exista en ~/Downloads.
+    # Comprobar que el ZIP de Resolve existe
     local RESOLVE_ZIP
     RESOLVE_ZIP="$(find "${DOWNLOADS_DIR}" -maxdepth 1 -name 'DaVinci_Resolve*_Linux.zip' -print -quit)"
 
@@ -101,7 +77,7 @@ install_davinci_resolve() {
     fi
     log_info "Usando ZIP: ${RESOLVE_ZIP}"
 
-    # Verifica que haya suficiente espacio en disco.
+    # Verificar espacio en disco
     local NEEDED_GB=10
     local FREE_KB
     FREE_KB=$(df --output=avail -k "${DOWNLOADS_DIR}" | tail -n1)
@@ -111,7 +87,7 @@ install_davinci_resolve() {
         return 1
     fi
 
-    # Advierte si hay drivers de NVIDIA, ya que pueden causar conflictos.
+    # Advertir sobre paquetes NVIDIA
     if pacman -Qi nvidia &>/dev/null; then
         log_warning "Se detectaron paquetes de NVIDIA. Resolve para Intel puede tener conflictos."
         read -p "¿Deseas intentar desinstalar los paquetes de NVIDIA? [s/N]: " confirm
@@ -127,41 +103,43 @@ install_davinci_resolve() {
     # --- 2. Instalación de Dependencias ---
     log_info "Instalando dependencias necesarias..."
 
-    # Instala los headers del kernel si son necesarios.
+    # Instalar headers del kernel correspondiente
     local KERNEL_VERSION
     KERNEL_VERSION=$(uname -r)
     local KERNEL_PKG
+    # Extrae el nombre base del kernel (ej. 'linux', 'linux-zen', 'linux-lts')
     KERNEL_PKG=$(pacman -Qo "/boot/vmlinuz-${KERNEL_VERSION%%-*}" | awk '{print $1}')
     if [[ -n "$KERNEL_PKG" && ! -d "/usr/lib/modules/${KERNEL_VERSION}/build" ]]; then
         log_info "Instalando headers para el kernel actual (${KERNEL_PKG}-headers)..."
         sudo pacman -S --needed --noconfirm "${KERNEL_PKG}-headers" || log_warning "No se pudieron instalar los headers del kernel."
     fi
 
-    # Instala dependencias desde los repositorios oficiales.
+    # Instalar dependencias de Pacman
     start_spinner "Instalando dependencias de Pacman..."
     sudo pacman -S --needed --noconfirm "${PACMAN_DEPS[@]}" &> /dev/null
     stop_spinner $? "Dependencias de Pacman instaladas."
 
-    # Instala dependencias desde AUR.
+    # Instalar dependencias de AUR
     start_spinner "Instalando dependencias de AUR..."
     if aur_install_packages "${AUR_DEPS[@]}"; then
         stop_spinner 0 "Dependencias de AUR instaladas."
     else
         stop_spinner 1 "Falló la instalación de dependencias de AUR."
+        log_error "No se pudieron instalar paquetes como 'intel-compute-runtime' desde AUR."
         return 1
     fi
 
     # --- 3. Configuración del Entorno ---
     log_info "Configurando el entorno para OpenCL..."
 
-    # Asegura que el fichero de configuración de OpenCL para Intel exista.
+    # Asegurar el archivo ICD para OpenCL de Intel
     if [[ ! -f /etc/OpenCL/vendors/intel.icd ]]; then
         log_info "Creando vendor file de OpenCL para Intel..."
         sudo mkdir -p /etc/OpenCL/vendors
         echo "/usr/lib/intel-opencl/libigdrcl.so" | sudo tee /etc/OpenCL/vendors/intel.icd >/dev/null
     fi
 
-    # Algunas aplicaciones antiguas esperan los certificados en /etc/pki/tls.
+    # Crear enlace /etc/pki/tls si es necesario
     if [[ ! -e /etc/pki/tls ]]; then
         log_info "Creando enlace /etc/pki/tls → /etc/ssl"
         sudo mkdir -p /etc/pki
@@ -170,9 +148,10 @@ install_davinci_resolve() {
 
     sudo ldconfig || true
 
-    # Verifica que OpenCL y VA-API estén funcionando.
+    # Verificaciones
     log_info "Verificando OpenCL instalado..."
     clinfo | grep -E "Platform Name|Device Name" || true
+
     log_info "Verificando soporte de decodificación VA-API para H264 / HEVC..."
     vainfo | grep -E "H264|HEVC" || true
 
@@ -184,10 +163,12 @@ install_davinci_resolve() {
     unzip -q "${RESOLVE_ZIP}" -d "${WORKDIR}"
     stop_spinner $? "ZIP extraído."
 
-    # El ZIP contiene un archivo .run, que a su vez contiene un AppImage.
     local RUN_FILE
     RUN_FILE="$(find "${WORKDIR}" -maxdepth 2 -type f -name 'DaVinci_Resolve_*_Linux.run' -print -quit)"
-    if [[ -z "${RUN_FILE}" ]]; then log_error "No se encontró el archivo .run dentro del ZIP."; return 1; fi
+    if [[ -z "${RUN_FILE}" ]]; then
+        log_error "No se encontró el archivo .run dentro del ZIP."
+        return 1
+    fi
     chmod +x "${RUN_FILE}"
     
     start_spinner "Extrayendo AppImage..."
@@ -197,13 +178,18 @@ install_davinci_resolve() {
     stop_spinner $? "AppImage extraído."
     
     local APPDIR="${EX_DIR}/squashfs-root"
-    if [[ ! -d "${APPDIR}" ]]; then log_error "No se extrajo correctamente la carpeta squashfs-root."; return 1; fi
+    if [[ ! -d "${APPDIR}" ]]; then
+        log_error "No se extrajo correctamente la carpeta squashfs-root."
+        return 1
+    fi
     
     chmod -R u+rwX,go+rX,go-w "${APPDIR}"
-    if [[ ! -x "${APPDIR}/bin/resolve" ]]; then log_error "El binario resolve no existe o está vacío."; return 1; fi
+    if [[ ! -x "${APPDIR}/bin/resolve" ]]; then
+        log_error "El binario resolve no existe o está vacío."
+        return 1
+    fi
     
-    # Resolve incluye sus propias versiones de librerías que pueden ser incompatibles.
-    # Se reemplazan por enlaces a las versiones del sistema.
+    # Reemplazar librerías glib/gio/gmodule
     log_info "Ajustando bibliotecas glib/gio/gmodule para usar las del sistema..."
     pushd "${APPDIR}" >/dev/null
     rm -f libs/libglib-2.0.so.0 libs/libgio-2.0.so.0 libs/libgmodule-2.0.so.0 || true
@@ -214,16 +200,25 @@ install_davinci_resolve() {
     
     # --- 5. Aplicar Patches y Copiar Archivos ---
     log_info "Aplicando RPATH con patchelf (esto puede tardar)..."
-    # Se modifica el RPATH de los binarios de Resolve para que busquen las librerías
-    # dentro de su propio directorio de instalación (/opt/resolve).
-    RPATH_DIRS=("libs" "libs/plugins/sqldrivers" "libs/plugins/xcbglintegrations" "libs/plugins/imageformats" "libs/plugins/platforms" "libs/Fusion" "plugins" "bin")
+    RPATH_DIRS=(
+        "libs"
+        "libs/plugins/sqldrivers"
+        "libs/plugins/xcbglintegrations"
+        "libs/plugins/imageformats"
+        "libs/plugins/platforms"
+        "libs/Fusion"
+        "plugins"
+        "bin"
+    )
     RPATH_ABS=""
     for p in "${RPATH_DIRS[@]}"; do
         RPATH_ABS+="${INSTALL_DIR}/${p}:"
     done
     RPATH_ABS+="\$ORIGIN"
     
+    # Usar barra de progreso para patchelf
     if ! command_exists patchelf; then
+        log_warning "El comando 'patchelf' no está instalado. Es necesario para ajustar las librerías."
         start_spinner "Instalando patchelf..."
         sudo pacman -S --noconfirm --needed patchelf &> /dev/null
         stop_spinner $? "patchelf instalado."
@@ -244,7 +239,6 @@ install_davinci_resolve() {
         log_success "RPATH aplicado a $total_files archivos."
     fi
     
-    # Copia los archivos de la aplicación a /opt/resolve.
     start_spinner "Copiando archivos a /opt/resolve..."
     sudo rm -rf "${INSTALL_DIR}"
     sudo mkdir -p "${INSTALL_DIR}"
@@ -253,15 +247,15 @@ install_davinci_resolve() {
 
     sudo mkdir -p "${INSTALL_DIR}/.license"
     
-    # Enlaza libcrypt.so.1 si es necesario.
+    # Enlazar libcrypt legado si es necesario
     sudo ldconfig || true
     if [[ -e /usr/lib/libcrypt.so.1 ]]; then
         sudo ln -sf /usr/lib/libcrypt.so.1 "${INSTALL_DIR}/libs/libcrypt.so.1"
     fi
     
     # --- 6. Crear Wrapper y Acceso Directo ---
+    # Crear wrapper + acceso en escritorio
     log_info "Creando wrapper y acceso para DaVinci Resolve..."
-    # Se crea un script que establece variables de entorno necesarias antes de ejecutar Resolve.
     cat << EOF | sudo tee "${WRAPPER_PATH}" >/dev/null
 #!/usr/bin/env bash
 set -euo pipefail
@@ -274,7 +268,6 @@ EOF
     
     sudo chmod +x "${WRAPPER_PATH}"
     
-    # Crea un archivo .desktop para que la aplicación aparezca en el menú de aplicaciones.
     mkdir -p "${HOME}/.local/share/applications"
     cat > "${HOME}/.local/share/applications/davinci-resolve-wrapper.desktop" << EOF
 [Desktop Entry]
@@ -295,11 +288,12 @@ EOF
 
     log_success "DaVinci Resolve (Intel Edition) instalado en ${INSTALL_DIR}"
     log_info "Usa '${WRAPPER_PATH##*/}' para lanzar la aplicación"
+    log_info "Para verificar OpenCL: clinfo | grep -E 'Platform Name|Device Name'"
     
     return 0
 }
 
-# Ejecutar si se llama directamente al script.
+# Ejecutar si se llama directamente
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     install_davinci_resolve "$@"
 fi
