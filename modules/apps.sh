@@ -2,6 +2,19 @@
 # ===============================================================
 # apps.sh - Instalación de aplicaciones esenciales
 # ===============================================================
+#
+# Este módulo se encarga de instalar y configurar una amplia gama
+# de aplicaciones y herramientas de sistema.
+#
+# Funciones principales:
+#   - Instala Homebrew (Linuxbrew) para gestionar paquetes adicionales.
+#   - Instala paquetes desde los repositorios de Arch (pacman) y desde AUR.
+#   - Organiza los paquetes por categorías (base, multimedia, red, etc.).
+#   - Configura drivers para gráficos Intel Iris Xe.
+#   - Configura GNOME Keyring para la gestión de contraseñas y claves SSH.
+#   - Habilita servicios del sistema para aplicaciones como keyd, logiops y TeamViewer.
+#
+# ===============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
@@ -57,7 +70,7 @@ install_homebrew() {
     fi
     
     log_info "Instalando Homebrew..."
-    # Instalar de forma no interactiva
+    # Instala de forma no interactiva para evitar prompts.
     if NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"; then
         log_success "Homebrew instalado correctamente."
         ensure_homebrew_env "${brew_path}" || log_warning "Homebrew se instaló pero no se pudo configurar la shell automáticamente."
@@ -67,41 +80,56 @@ install_homebrew() {
     fi
 }
 
+# ---------------------------------------------------------------
+# run_module_main()
+# ---------------------------------------------------------------
+# Función principal del módulo de instalación de aplicaciones.
+#
+# Ejecuta una secuencia de tareas para instalar y configurar
+# aplicaciones esenciales del sistema.
+# ---------------------------------------------------------------
 run_module_main() {
     log_step "Instalación de Aplicaciones"
 
     # --- Definición de Paquetes ---
+    # Paquetes base para el sistema y desarrollo.
     local PACMAN_BASE=(
         git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
         gnome-keyring libsecret seahorse openssh rsync
     )
+    # Paquetes para reproducción y edición multimedia.
     local PACMAN_MULTIMEDIA=(
         vlc vlc-plugins-all libdvdcss audacity inkscape
         ffmpeg gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly
         yt-dlp
     )
+    # Aplicaciones de red y conectividad.
     local PACMAN_NETWORK=(
         filezilla telegram-desktop scrcpy speedtest-cli
     )
+    # Drivers para gráficos Intel (Mesa y Vulkan).
     local PACMAN_INTEL_GFX=(
         mesa vulkan-intel lib32-mesa lib32-vulkan-intel
     )
+    # Drivers para aceleración de vídeo por hardware en Intel (VA-API).
     local PACMAN_INTEL_VIDEO=(
         intel-media-driver libva-utils libvdpau-va-gl libva-mesa-driver
     )
+    # Soporte para computación GPGPU con OpenCL.
     local PACMAN_OPENCL=(
         ocl-icd libclc clinfo
     )
+    # Paquetes a instalar desde el Arch User Repository (AUR).
     local AUR_PACKAGES=(
         "visual-studio-code-bin" "cursor-bin" "keyd" "fragments"
         "logiops" "ltunify" "teamviewer" "intel-compute-runtime"
     )
 
+    # --- Instalación de Paquetes ---
     log_info "Actualizando el sistema para evitar conflictos de dependencias..."
     sudo pacman -Syu --noconfirm || {
         log_warning "No se pudo completar la actualización del sistema. Pueden ocurrir errores de dependencias."
-        # Continuamos de todos modos, pero con una advertencia.
     }
 
     log_info "Instalando herramientas base..."
@@ -110,7 +138,7 @@ run_module_main() {
         return 1
     }
 
-    # Instalar Homebrew
+    # Instalar Homebrew si no está presente.
     install_homebrew
 
     log_info "Instalando aplicaciones multimedia..."
@@ -118,6 +146,7 @@ run_module_main() {
         log_warning "Algunos paquetes multimedia no se pudieron instalar"
     }
 
+    # Configura VLC como el reproductor por defecto para los tipos de archivo más comunes.
     log_info "Configurando VLC como reproductor predeterminado..."
     local mime_types=("audio/mpeg" "audio/mp4" "audio/x-wav" "video/mp4" "video/x-matroska" "video/x-msvideo" "video/x-ms-wmv" "video/webm")
     for type in "${mime_types[@]}"; do
@@ -129,14 +158,15 @@ run_module_main() {
         log_warning "Algunos paquetes de red no se pudieron instalar"
     }
     
-    # Flatpak
     log_info "Instalando Flatpak..."
     sudo pacman -S --noconfirm --needed flatpak || {
         log_warning "Flatpak no se pudo instalar"
     }
 
+    # --- Configuración de Drivers Intel ---
     log_info "Instalando drivers y codecs para Intel Iris Xe..."
 
+    # Instala los headers del kernel si son necesarios para compilar módulos.
     KVER="$(uname -r)"
     if [[ ! -d "/usr/lib/modules/${KVER}/build" ]]; then
         log_info "Instalando headers de kernel..."
@@ -160,15 +190,17 @@ run_module_main() {
         log_warning "Algunos paquetes OpenCL no se pudieron instalar"
     }
 
+    # Crea el fichero de configuración de OpenCL para los drivers de Intel.
     if [[ ! -f /etc/OpenCL/vendors/intel.icd ]] && [[ -f /usr/lib/intel-opencl/libigdrcl.so ]]; then
         log_info "Configurando OpenCL para Intel..."
         sudo mkdir -p /etc/OpenCL/vendors
         echo "/usr/lib/intel-opencl/libigdrcl.so" | sudo tee /etc/OpenCL/vendors/intel.icd >/dev/null
     fi
 
+    # Actualiza la caché de librerías compartidas.
     sudo ldconfig || true
     
-    # Verificar instalación de drivers
+    # --- Verificación de Drivers ---
     log_info "Verificando drivers Intel instalados..."
     if command_exists vainfo; then
         log_info "Información de VA-API:"
@@ -180,25 +212,30 @@ run_module_main() {
         clinfo 2>/dev/null | grep -E "Platform Name|Device Name" || true
     fi
     
+    # --- Instalación desde AUR ---
     log_info "Instalando aplicaciones desde AUR..."
     log_warning "Este paso puede tardar varios minutos; qt5-webengine y teamviewer descargan y compilan bastante."
     if ! aur_install_packages "${AUR_PACKAGES[@]}"; then
         log_warning "Algunas aplicaciones de AUR no se pudieron instalar automáticamente."
     fi
     
-    # Configurar servicios
-    log_info "Configurando servicios..."
+    # --- Configuración de Servicios ---
+    log_info "Configurando servicios del sistema..."
     
+    # Configura GNOME Keyring para que actúe como agente de credenciales y SSH.
     log_info "Configurando GNOME Keyring como agente de credenciales..."
     mkdir -p "${HOME}/.config/environment.d"
     cat <<'EOF' > "${HOME}/.config/environment.d/10-gnome-keyring.conf"
 SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
 EOF
+    # Habilita el servicio de GNOME Keyring para el usuario actual.
     if systemctl --user enable --now gnome-keyring-daemon.socket gnome-keyring-daemon.service >/dev/null 2>&1; then
         log_success "GNOME Keyring listo para gestionar contraseñas y claves SSH."
     else
         log_warning "No se pudo habilitar gnome-keyring-daemon en systemd de usuario. Verifica que tu sesión use systemd (--user)."
     fi
+
+    # Inicia el daemon de GNOME Keyring en la sesión actual para que `ssh-add` funcione.
     if command_exists gnome-keyring-daemon; then
         local keyring_eval
         keyring_eval="$(gnome-keyring-daemon --start --components=secrets,ssh 2>/dev/null)" || keyring_eval=""
@@ -212,21 +249,16 @@ EOF
     fi
     log_info "Vuelve a iniciar sesión para que las variables de entorno del keyring se apliquen."
     
+    # Busca claves SSH en ~/.ssh y las añade al agente de GNOME Keyring.
     if command_exists ssh-add; then
         local ssh_dir="${HOME}/.ssh"
         if [[ -d "$ssh_dir" ]]; then
+            # Encuentra todas las claves privadas válidas.
             mapfile -t ssh_private_keys < <(
                 find "$ssh_dir" -maxdepth 1 -type f -perm -u=r \
-                    ! -name "*.pub" \
-                    ! -name "*-cert.pub" \
-                    ! -name "known_hosts" \
-                    ! -name "known_hosts.*" \
-                    ! -name "authorized_keys" \
-                    ! -name "config" \
-                    ! -name "*.old" \
-                    ! -name "agent" \
-                    ! -name "*.bak" \
-                    2>/dev/null
+                    ! -name "*.pub" ! -name "*-cert.pub" ! -name "known_hosts" \
+                    ! -name "known_hosts.*" ! -name "authorized_keys" ! -name "config" \
+                    ! -name "*.old" ! -name "agent" ! -name "*.bak" 2>/dev/null
             )
             if [[ ${#ssh_private_keys[@]} -gt 0 ]]; then
                 log_info "Agregando claves SSH detectadas al keyring (se solicitará la passphrase si aplica)..."
@@ -235,23 +267,20 @@ EOF
                         log_warning "No se puede leer la clave $(basename "$key_path"); revísala manualmente."
                         continue
                     fi
+                    # Intenta añadir la clave al agente.
                     if ssh-keygen -y -f "$key_path" >/dev/null 2>&1; then
                         log_info "Registrando clave $(basename "$key_path")..."
                         local spinner_was_active=0
-                        if [[ ${SPINNER_ACTIVE:-0} -eq 1 ]]; then
-                            spinner_was_active=1
-                        fi
-                        if declare -F pause_spinner >/dev/null; then
-                            pause_spinner
-                        fi
+                        if [[ ${SPINNER_ACTIVE:-0} -eq 1 ]]; then spinner_was_active=1; fi
+                        if declare -F pause_spinner >/dev/null; then pause_spinner; fi
+
                         if SSH_AUTH_SOCK="$SSH_AUTH_SOCK" ssh-add "$key_path"; then
                             log_success "Clave $(basename "$key_path") añadida al keyring."
                         else
                             log_warning "No se pudo añadir la clave $(basename "$key_path")."
                         fi
-                        if (( spinner_was_active )) && declare -F resume_spinner >/dev/null; then
-                            resume_spinner
-                        fi
+
+                        if (( spinner_was_active )) && declare -F resume_spinner >/dev/null; then resume_spinner; fi
                     else
                         log_warning "La clave $(basename "$key_path") parece inválida. Se omite."
                     fi
@@ -266,25 +295,20 @@ EOF
         log_warning "ssh-add no está disponible; no se pueden registrar claves en el keyring."
     fi
     
-    # Habilitar keyd si está instalado
+    # Habilita los servicios de las aplicaciones instaladas.
     if command_exists keyd; then
         log_info "Habilitando servicio keyd..."
-        sudo systemctl enable keyd.service 2>/dev/null || true
-        sudo systemctl start keyd.service 2>/dev/null || true
+        sudo systemctl enable --now keyd.service 2>/dev/null || true
     fi
     
-    # Habilitar logiops si está instalado
     if command_exists logiops; then
         log_info "Habilitando servicio logiops..."
-        sudo systemctl enable logiops.service 2>/dev/null || true
-        sudo systemctl start logiops.service 2>/dev/null || true
+        sudo systemctl enable --now logiops.service 2>/dev/null || true
     fi
     
-    # Habilitar TeamViewer daemon si está instalado
     if command_exists teamviewer; then
         log_info "Habilitando servicio TeamViewer..."
-        sudo systemctl enable teamviewerd.service 2>/dev/null || true
-        sudo systemctl start teamviewerd.service 2>/dev/null || true
+        sudo systemctl enable --now teamviewerd.service 2>/dev/null || true
         log_success "TeamViewer daemon habilitado e iniciado"
     fi
     
@@ -292,7 +316,7 @@ EOF
     return 0
 }
 
-# Ejecutar si se llama directamente
+# Ejecutar si se llama directamente al script.
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
     run_module_main "$@"
 fi
