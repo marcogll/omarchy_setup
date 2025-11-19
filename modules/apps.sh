@@ -113,21 +113,32 @@ install_homebrew() {
 # Instala NVM (Node Version Manager).
 #
 # Descarga y ejecuta el script de instalación oficial de NVM.
+# Se asegura de que el directorio de instalación exista antes de
+# ejecutar el script para evitar errores si $NVM_DIR está predefinido.
 # ---------------------------------------------------------------
 install_nvm() {
     log_step "Instalación de NVM (Node Version Manager)"
 
-    if [[ -d "${HOME}/.nvm" ]]; then
+    # Define y exporta NVM_DIR para asegurar consistencia.
+    export NVM_DIR="$HOME/.nvm"
+
+    if [[ -d "$NVM_DIR" ]]; then
         log_success "NVM ya está instalado."
         return 0
     fi
 
     log_info "Instalando NVM..."
+    # Crea el directorio de instalación para evitar el error "directory does not exist".
+    mkdir -p "$NVM_DIR"
+
+    # El script de nvm espera que NVM_DIR esté exportado.
     if curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash; then
         log_success "NVM instalado correctamente."
-        log_info "Para usar NVM, reinicia tu terminal o ejecuta: source ~/.nvm/nvm.sh"
+        log_info "Para usar NVM, reinicia tu terminal o ejecuta: source ${NVM_DIR}/nvm.sh"
     else
         log_error "Falló la instalación de NVM."
+        # Limpia el directorio si la instalación falló para no dejar un estado inconsistente.
+        rm -rf "$NVM_DIR"
         return 1
     fi
 }
@@ -148,7 +159,7 @@ run_module_main() {
     local PACMAN_BASE=(
         git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
-        gnome-keyring libsecret seahorse openssh rsync
+        gnome-keyring libsecret seahorse openssh rsync usbutils
     )
     # Paquetes para desarrollo de software.
     local PACMAN_DEV=(
@@ -158,7 +169,7 @@ run_module_main() {
     local PACMAN_MULTIMEDIA=(
         vlc vlc-plugins-all libdvdcss audacity inkscape
         ffmpeg gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly
-        yt-dlp
+        yt-dlp alsa-utils pavucontrol
     )
     # Aplicaciones de red y conectividad.
     local PACMAN_NETWORK=(
@@ -171,6 +182,7 @@ run_module_main() {
     # Drivers para aceleración de vídeo por hardware en Intel (VA-API).
     local PACMAN_INTEL_VIDEO=(
         intel-media-driver libva-utils libvdpau-va-gl libva-mesa-driver
+        libva-intel-driver onevpl-intel-gpu
     )
     # Soporte para computación GPGPU con OpenCL.
     local PACMAN_OPENCL=(
