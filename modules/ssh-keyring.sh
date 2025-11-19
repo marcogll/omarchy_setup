@@ -45,13 +45,19 @@ EOF
         log_info "GNOME Keyring ya estaba en ejecución."
     fi
 
-    local keyring_socket="${SSH_AUTH_SOCK:-/run/user/$UID/keyring/ssh}"
+    local target_uid
+    target_uid=$(id -u "$(logname)")
+    local keyring_socket="${SSH_AUTH_SOCK:-/run/user/${target_uid}/keyring/ssh}"
+
     if [[ ! -S "$keyring_socket" ]]; then
-        log_warning "No se encontró el socket de GNOME Keyring en ${keyring_socket}."
-        if [[ -S "/run/user/$UID/keyring/ssh" ]]; then
-            keyring_socket="/run/user/$UID/keyring/ssh"
+        log_warning "No se encontró el socket de GNOME Keyring en la ruta esperada."
+        # Como fallback, intentamos la ruta con el UID del proceso actual.
+        local fallback_socket="/run/user/$(id -u)/keyring/ssh"
+        if [[ -S "$fallback_socket" ]]; then
+            keyring_socket="$fallback_socket"
+            log_info "Se encontró un socket válido en la ruta de fallback: ${keyring_socket}"
         else
-            log_error "GNOME Keyring no expone el componente SSH. Revisa tu sesión."
+            log_error "GNOME Keyring no parece estar exponiendo el socket SSH. Asegúrate de haber reiniciado la sesión."
             return 1
         fi
     fi
