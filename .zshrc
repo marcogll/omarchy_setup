@@ -234,30 +234,6 @@ killport(){
 # Inicia un servidor HTTP simple en el directorio actual.
 serve(){ python -m http.server "${1:-8000}"; }
 
-# --- Gestión de Batería (TLP) -----------------------------------------------
-# Funciones para controlar los umbrales de carga de la batería en laptops
-# compatibles, como las Huawei. Requiere TLP instalado y configurado.
-
-# Pone la batería en modo "Eco" para prolongar su vida útil.
-# Limita la carga al 80%.
-eco-batt() {
-  if command -v tlp >/dev/null 2>&1; then
-    sudo tlp setcharge 70 80 && echo "🔋 Modo Eco activado: la carga se detendrá al 80%."
-  else
-    echo "❌ TLP no está instalado. No se puede gestionar la batería."
-  fi
-}
-
-# Pone la batería en modo de carga completa.
-# Permite que la batería se cargue al 100%.
-full-batt() {
-  if command -v tlp >/dev/null 2>&1; then
-    sudo tlp setcharge 99 100 && echo "⚡ Modo de carga completa activado: la batería cargará al 100%."
-  else
-    echo "❌ TLP no está instalado. No se puede gestionar la batería."
-  fi
-}
-
 # Muestra una lista de todos los alias y funciones personalizadas.
 zsh_help() {
   # --- Colores ---
@@ -347,11 +323,6 @@ zsh_help() {
   print_command "killport <port>" "Mata el proceso que usa un puerto."
   print_command "clima" "Muestra el clima de Saltillo."
   print_command "zsh-help" "Muestra esta ayuda."
-
-  # --- Gestión de Batería (TLP) ---
-  print_section "Gestión de Batería (TLP)"
-  print_command "eco-batt" "Activa el modo Eco (carga hasta 80%)."
-  print_command "full-batt" "Activa la carga completa (hasta 100%)."
 
   # --- Descargas (yt-dlp) ---
   print_section "Descargas (yt-dlp)"
