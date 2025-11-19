@@ -37,13 +37,14 @@ sync_ssh_keyring() {
 SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
 EOF
 
-    local keyring_eval=""
-    if keyring_eval="$(gnome-keyring-daemon --start --components=ssh,secrets 2>/dev/null)"; then
-        eval "$keyring_eval"
-        log_success "GNOME Keyring iniciado."
-    else
-        log_info "GNOME Keyring ya estaba en ejecución."
-    fi
+    # No intentamos iniciar el daemon. Después de un reinicio de sesión, ya debería estar activo.
+    log_info "Buscando el socket del agente de GNOME Keyring..."
+
+    # Obtenemos el UID del usuario dueño del directorio HOME. Este método es más fiable.
+    local target_uid
+    target_uid=$(stat -c '%u' "$HOME")
+
+    local keyring_socket="/run/user/${target_uid}/keyring/ssh"
 
     local target_uid
     target_uid=$(id -u "$(logname)")
@@ -61,6 +62,8 @@ EOF
             return 1
         fi
     fi
+
+    log_success "Socket de GNOME Keyring encontrado en: ${keyring_socket}"
     export SSH_AUTH_SOCK="$keyring_socket"
 
     local ssh_dir="${HOME}/.ssh"
