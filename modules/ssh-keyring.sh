@@ -46,6 +46,12 @@ EOF
 
     local keyring_socket="/run/user/${target_uid}/keyring/ssh"
 
+    # Obtenemos el UID del usuario dueño del directorio HOME. Este método es más fiable.
+    local target_uid
+    target_uid=$(stat -c '%u' "$HOME")
+
+    local keyring_socket="/run/user/${target_uid}/keyring/ssh"
+
     if [[ ! -S "$keyring_socket" ]]; then
         log_error "No se encontró el socket de GNOME Keyring en la ruta esperada: ${keyring_socket}"
         log_warning "Esto usualmente significa que el servicio no se ha iniciado correctamente con tu sesión de escritorio."
