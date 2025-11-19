@@ -234,6 +234,114 @@ killport(){
 # Inicia un servidor HTTP simple en el directorio actual.
 serve(){ python -m http.server "${1:-8000}"; }
 
+# Muestra una lista de todos los alias y funciones personalizadas.
+zsh_help() {
+  # --- Colores ---
+  local C_DEFAULT="\e[0m"
+  local C_BOLD="\e[1m"
+  local C_TITLE="\e[1;35m" # Bold Magenta
+  local C_SECTION="\e[1;34m" # Bold Blue
+  local C_CMD="\e[0;32m"   # Green
+  local C_DESC="\e[0;37m"  # White
+  local C_HL="\e[0;33m"    # Yellow
+
+  # --- Encabezado ---
+  echo -e "${C_TITLE}╔═════════════════════════════════════════════════════════╗"
+  echo -e "${C_TITLE}║      AYUDA DE LA CONFIGURACIÓN DE ZSH - Comandos      ║"
+  echo -e "${C_TITLE}╚═════════════════════════════════════════════════════════╝${C_DEFAULT}"
+
+  # --- Función para imprimir secciones ---
+  print_section() {
+    echo -e "\n${C_SECTION}--- $1 ---${C_DEFAULT}"
+  }
+
+  # --- Función para imprimir comandos ---
+  print_command() {
+    printf "  ${C_CMD}%-15s ${C_DESC}%s\n${C_DEFAULT}" "$1" "$2"
+  }
+
+  # --- Alias Generales ---
+  print_section "Alias Generales"
+  print_command "cls" "Limpia la pantalla."
+  print_command "ll" "Lista archivos en formato largo."
+  print_command "la" "Lista todos los archivos (incluyendo ocultos)."
+  print_command "l" "Lista archivos en columnas."
+  print_command ".." "Sube un nivel en el árbol de directorios."
+  print_command "..." "Sube dos niveles."
+  print_command "...." "Sube tres niveles."
+  print_command "ff / nf" "Muestra información del sistema (fastfetch)."
+
+  # --- Gestión de Paquetes (Arch) ---
+  print_section "Gestión de Paquetes (Arch Linux)"
+  print_command "pacu" "Actualiza el sistema (pacman)."
+  print_command "paci" "Instala un paquete (pacman)."
+  print_command "pacr" "Elimina un paquete (pacman)."
+  print_command "pacs" "Busca un paquete (pacman)."
+  print_command "yayu" "Actualiza el sistema (yay)."
+  print_command "yayi" "Instala un paquete (yay)."
+
+  # --- Git ---
+  print_section "Git"
+  print_command "gs" "git status"
+  print_command "ga" "git add"
+  print_command "gc" "git commit"
+  print_command "gcm" "git commit -m '...'"
+  print_command "gac <msg>" "git add . && git commit -m '<msg>'"
+  print_command "gp" "git push"
+  print_command "gl" "git pull"
+  print_command "gd" "git diff"
+  print_command "gb" "git branch"
+  print_command "gco" "git checkout"
+  print_command "gcb" "git checkout -b"
+  print_command "glog" "Muestra un log de commits formateado."
+
+  # --- Docker ---
+  print_section "Docker"
+  print_command "d" "docker"
+  print_command "dc" "docker compose"
+  print_command "dps" "Muestra todos los contenedores."
+  print_command "di" "Muestra todas las imágenes."
+  print_command "dex <id>" "Ejecuta una terminal en un contenedor."
+  print_command "dlog <id>" "Muestra los logs de un contenedor."
+
+  # --- Python ---
+  print_section "Python"
+  print_command "py" "python3"
+  print_command "pip" "pip3"
+  print_command "pipi" "pip install ..."
+  print_command "pir" "pip install -r requirements.txt"
+  print_command "pipf" "pip freeze > requirements.txt"
+  print_command "venv create" "Crea un entorno virtual."
+  print_command "venv on" "Activa el entorno virtual."
+  print_command "venv off" "Desactiva el entorno virtual."
+  print_command "serve [port]" "Inicia un servidor HTTP (puerto 8000 por defecto)."
+
+  # --- Funciones de Utilidad ---
+  print_section "Funciones de Utilidad"
+  print_command "mkcd <dir>" "Crea un directorio y entra en él."
+  print_command "extract <file>" "Extrae cualquier archivo comprimido."
+  print_command "killport <port>" "Mata el proceso que usa un puerto."
+  print_command "clima" "Muestra el clima de Saltillo."
+  print_command "zsh-help" "Muestra esta ayuda."
+
+  # --- Descargas (yt-dlp) ---
+  print_section "Descargas (yt-dlp)"
+  print_command "ytm <url|bús>" "Descarga audio de YouTube como MP3."
+  print_command "ytv <url|bús>" "Descarga video de YouTube como MP4."
+  print_command "ytls" "Lista los últimos 5 archivos descargados."
+
+  # --- Agente SSH ---
+  print_section "Agente SSH"
+  print_command "ssh-list" "Lista las llaves SSH cargadas."
+  print_command "ssh-clear" "Elimina todas las llaves del agente."
+  print_command "ssh-reload" "Recarga todas las llaves SSH."
+  print_command "ssh-github" "Prueba la conexión SSH con GitHub."
+  echo ""
+}
+
+# Alias para acceder a la función de ayuda.
+alias zsh-help='zsh_help'
+
 # --- yt-dlp (Descargador de vídeos) ------------------------------------------
 # Funciones mejoradas para descargar audio y video desde YouTube.
 export YTDLP_DIR="$HOME/Videos/YouTube"

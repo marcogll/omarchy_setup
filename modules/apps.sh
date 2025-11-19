@@ -160,6 +160,7 @@ run_module_main() {
         git curl wget base-devel unzip htop fastfetch btop
         vim nano tmux xdg-utils xdg-user-dirs stow
         gnome-keyring libsecret seahorse openssh rsync usbutils
+        tlp
     )
     # Paquetes para desarrollo de software.
     local PACMAN_DEV=(
@@ -342,6 +343,13 @@ EOF
         log_info "Habilitando servicio TeamViewer..."
         sudo systemctl enable --now teamviewerd.service 2>/dev/null || true
         log_success "TeamViewer daemon habilitado e iniciado"
+    fi
+
+    if command_exists tlp; then
+        log_info "Habilitando servicio TLP para gestión de energía..."
+        sudo systemctl enable tlp.service 2>/dev/null || true
+        sudo systemctl start tlp.service 2>/dev/null || true
+        log_success "TLP habilitado e iniciado."
     fi
     
     log_success "Aplicaciones instaladas correctamente"
