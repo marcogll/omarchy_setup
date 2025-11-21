@@ -136,6 +136,7 @@ MODULES=(
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
     ["R"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
+    ["T"]="doc_templates;install_doc_templates;📄 Copiar Plantillas de Documentos a ~/Templates;bg"
 )
 
 # Módulos a excluir de la opción "Instalar Todo"
