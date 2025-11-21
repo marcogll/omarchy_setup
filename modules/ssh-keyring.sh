@@ -3,6 +3,9 @@
 # ssh-keyring.sh - Sincronizar claves SSH con GNOME Keyring
 # ===============================================================
 
+# --- Dependencias del Módulo ---
+MODULE_DEPS=("apps")
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
