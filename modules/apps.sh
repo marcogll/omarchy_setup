@@ -144,6 +144,31 @@ install_nvm() {
 }
 
 # ---------------------------------------------------------------
+# install_calibre()
+# ---------------------------------------------------------------
+# Instala Calibre, el gestor de libros electrónicos.
+#
+# Utiliza el instalador oficial de Calibre para sistemas Linux,
+# que descarga y configura la última versión estable.
+# ---------------------------------------------------------------
+install_calibre() {
+    log_step "Instalación de Calibre"
+
+    if command_exists calibre; then
+        log_success "Calibre ya está instalado."
+        return 0
+    fi
+
+    log_info "Instalando Calibre..."
+    if sudo -v && wget -nv -O- https://download.calibre-ebook.com/linux-installer.sh | sudo sh /dev/stdin; then
+        log_success "Calibre instalado correctamente."
+    else
+        log_error "Falló la instalación de Calibre."
+        return 1
+    fi
+}
+
+# ---------------------------------------------------------------
 # run_module_main()
 # ---------------------------------------------------------------
 # Función principal del módulo de instalación de aplicaciones.
@@ -217,6 +242,9 @@ run_module_main() {
 
     # Instalar Homebrew
     install_homebrew
+
+    # Instalar Calibre
+    install_calibre
 
     log_info "Instalando aplicaciones multimedia..."
     sudo pacman -S --noconfirm --needed "${PACMAN_MULTIMEDIA[@]}" || {
