@@ -193,6 +193,7 @@ run_module_main() {
     local AUR_PACKAGES=(
         "visual-studio-code-bin" "cursor-bin" "keyd" "fragments"
         "logiops" "ltunify" "teamviewer" "intel-compute-runtime"
+        "nautilus-open-any-terminal"
     )
 
     # --- Instalación de Paquetes ---
@@ -353,6 +354,15 @@ EOF
     fi
     
     log_success "Aplicaciones instaladas correctamente"
+
+    log_info "Reiniciando Nautilus para aplicar los cambios..."
+    if command -v nautilus >/dev/null; then
+        nautilus -q
+        log_success "Nautilus reiniciado."
+    else
+        log_info "Nautilus no está instalado, se omite el reinicio."
+    fi
+
     return 0
 }
 
