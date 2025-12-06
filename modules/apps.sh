@@ -342,7 +342,12 @@ EOF
     if command_exists teamviewer; then
         log_info "Habilitando servicio TeamViewer..."
         sudo systemctl enable --now teamviewerd.service 2>/dev/null || true
-        log_success "TeamViewer daemon habilitado e iniciado"
+        if sudo teamviewer --daemon start >/dev/null 2>&1; then
+            log_success "TeamViewer daemon iniciado"
+        else
+            log_warning "No se pudo iniciar el daemon de TeamViewer con 'teamviewer --daemon start'"
+        fi
+        sudo teamviewer --daemon enable >/dev/null 2>&1 || true
     fi
 
     if command_exists tlp; then
