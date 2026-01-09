@@ -43,11 +43,10 @@ Al ejecutar `./omarchy-setup.sh`, verás un menú interactivo:
 7.  **Iconos:** Gestor de temas de iconos (Tela, Papirus, Candy).
     *   **K:** Sincronizar claves SSH con GNOME Keyring.
     *   **F:** Soporte para formatos de disco (NTFS, exFAT, etc.).
-    *   **R:** DaVinci Resolve (Intel) - *Requiere ZIP en ~/Downloads*.
     *   **H:** Configuración de Hyprland (enlaza desde `mg_dotfiles`).
     *   **T:** Plantillas de documentos.
 
-*   **A) Instalar Todo:** Ejecuta la mayoría de los módulos automáticamente (excluye DaVinci Resolve).
+*   **A) Instalar Todo:** Ejecuta la mayoría de los módulos automáticamente.
 
 ## 📝 Notas Importantes
 

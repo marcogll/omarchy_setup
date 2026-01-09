@@ -8,7 +8,6 @@ Script de configuración **modular** y **personalizado** para **Arch Linux / Oma
 - **🔗 Integración con Dotfiles**: Vincula automáticamente configuraciones de Zsh y Hyprland desde el repositorio [mg_dotfiles](https://github.com/marcogll/mg_dotfiles).
 - **🎨 Menú Interactivo**: Selecciona exactamente qué componentes deseas configurar.
 - **🔐 Seguridad y Persistencia**: Gestión de sudo optimizada y sincronización con GNOME Keyring.
-- **🎬 Soporte DaVinci Resolve**: Instalador especializado para GPUs Intel Iris Xe.
 
 ## 🚀 Instalación Rápida
 
@@ -49,7 +48,6 @@ omarchy_setup/
 | **2** | **Zsh Config** | Requiere `mg_dotfiles` |
 | **3** | **Docker** | Docker + Portainer (Web UI) |
 | **H** | **Hyprland** | Requiere `mg_dotfiles` |
-| **R** | **DaVinci** | Requiere ZIP en `~/Downloads` |
 | **K** | **SSH Keyring** | Sincroniza llaves con GNOME |
 | **A** | **Instalar Todo** | Ejecuta la mayoría de los módulos |
 

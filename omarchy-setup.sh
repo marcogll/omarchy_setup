@@ -134,20 +134,16 @@ MODULES=(
     ["7D"]="icon_manager;set_default_icon_theme;🎨 Instalar Tema de Iconos por Defecto;bg"
     ["K"]="ssh-keyring;sync_ssh_keyring;🔐 Sincronizar claves SSH con GNOME Keyring;fg"
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
-    ["R"]="davinci-resolve;install_davinci_resolve;🎬 Instalar DaVinci Resolve (Intel Edition);fg"
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"
     ["T"]="doc_templates;install_doc_templates;📄 Copiar Plantillas de Documentos a ~/Templates;bg"
 )
-
-# Módulos a excluir de la opción "Instalar Todo"
-EXCLUDED_FROM_ALL=("R")
 
 # Generar dinámicamente la lista de módulos para "Instalar Todo"
 get_install_all_choices() {
     local choices=()
     for key in $(printf '%s\n' "${!MODULES[@]}" | sort -V); do
-        # Excluir módulos no deseados y el módulo interactivo de iconos
-        if [[ " ${EXCLUDED_FROM_ALL[*]} " =~ " ${key} " || "$key" == "7" ]]; then
+        # Excluir el módulo interactivo de iconos (7)
+        if [[ "$key" == "7" ]]; then
             continue
         fi
         # Si el módulo 7D existe, añadirlo en lugar del 7
@@ -183,7 +179,7 @@ show_menu() {
     done
 
     local install_all_keys=$(IFS=,; echo "${INSTALL_ALL_CHOICES[*]}")
-    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (${install_all_keys//,/, }) (excluye DaVinci)"
+    echo -e "  ${GREEN}A)${NC} ✅ Instalar Todo (${install_all_keys//,/, })"
     echo -e "  ${GREEN}0)${NC} 🚪 Salir"
     echo ""
     echo -e "${CYAN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -375,18 +371,6 @@ main() {
         if [[ -v "MODULES[$choice]" ]]; then
             IFS=';' read -r _ _ description type <<< "${MODULES[$choice]}"
             
-            # Manejo especial para DaVinci Resolve
-            if [[ "$choice" == "R" ]]; then
-                log_warning "DaVinci Resolve requiere el ZIP de instalación en ~/Downloads/"
-                echo -ne "${BOLD}¿Continuar con la instalación? [s/N]: ${NC} "
-                read -r confirm
-                if ! [[ "${confirm}" =~ ^[SsYy]$ ]]; then
-                    log_info "Instalación cancelada"
-                    read -p "Presiona Enter para continuar..."
-                    continue
-                fi
-            fi
-
             if ! ensure_sudo_session; then
                 read -p "Presiona Enter para continuar..."
                 continue
@@ -414,7 +398,6 @@ main() {
         elif [[ "$choice" == "A" ]]; then
                 local modules_to_install=$(IFS=,; echo "${INSTALL_ALL_CHOICES[*]}")
                 log_warning "La opción 'Instalar Todo' ejecutará los módulos: ${modules_to_install//,/, }."
-                log_info "Los módulos excluidos (como DaVinci Resolve) deben instalarse por separado."
                 echo -ne "${BOLD}¿Confirmas que deseas instalar todas las opciones ahora? [s/N]: ${NC}"
                 read -r confirm
                 if [[ "${confirm}" =~ ^[SsYy]$ ]]; then
