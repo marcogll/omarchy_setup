@@ -144,44 +144,37 @@ install_zsh() {
     ensure_omz_plugin "zsh-autosuggestions" "https://github.com/zsh-users/zsh-autosuggestions.git"
     ensure_omz_plugin "zsh-syntax-highlighting" "https://github.com/zsh-users/zsh-syntax-highlighting.git"
 
-    # --- 3. Descargar y configurar el .zshrc personalizado ---
-    log_info "Actualizando configuración .zshrc..."
-    local repo_zshrc_path="${SCRIPT_DIR_ROOT}/.zshrc"
-    local tmp_download="${target_home}/.zshrc.omarchy-tmp"
-    local source_file=""
-
-    if zsh_download_with_timeout "${REPO_BASE}/.zshrc" "$tmp_download" && [[ -s "$tmp_download" ]]; then
-        source_file="$tmp_download"
-        log_success "Configuración .zshrc descargada desde el repositorio remoto."
-    else
-        rm -f "$tmp_download"
-        if [[ -f "$repo_zshrc_path" ]]; then
-            log_warning "No se pudo descargar .zshrc. Usando la copia local del repositorio."
-            source_file="$repo_zshrc_path"
-        else
-            log_error "No se pudo obtener la configuración .zshrc (sin red y sin copia local)."
-            return 1
-        fi
+    # --- 3. Enlazar configuración .zshrc ---
+    log_info "Configurando .zshrc..."
+    local repo_zshrc_path="${DOTFILES_DIR}/zsh/.zshrc"
+    local repo_help_path="${DOTFILES_DIR}/zsh/.zshrc.help"
+    local repo_funcs_path="${DOTFILES_DIR}/zsh/.zsh_functions"
+    
+    if [[ ! -f "$repo_zshrc_path" ]]; then
+        log_error "No se encontró .zshrc en '${repo_zshrc_path}'."
+        return 1
     fi
 
-    # Crear copia de seguridad antes de sobrescribir
-    backup_file "${target_home}/.zshrc" || { rm -f "$tmp_download"; return 1; }
+    # Crear copia de seguridad antes de proceder
+    backup_file "${target_home}/.zshrc" || return 1
 
-    if [[ "$source_file" == "$tmp_download" ]]; then
-        if mv "$tmp_download" "${target_home}/.zshrc"; then
-            log_success "Archivo .zshrc actualizado."
-        else
-            rm -f "$tmp_download"
-            log_error "No se pudo mover el archivo .zshrc descargado."
-            return 1
-        fi
-    else
-        if cp "$source_file" "${target_home}/.zshrc"; then
-            log_success "Archivo .zshrc actualizado desde la copia local."
-        else
-            log_error "No se pudo copiar la configuración .zshrc local."
-            return 1
-        fi
+    log_success "Enlazando .zshrc desde mg_dotfiles..."
+    ln -sf "$repo_zshrc_path" "${target_home}/.zshrc"
+    
+    # Enlazar también el archivo de ayuda si existe
+    if [[ -f "$repo_help_path" ]]; then
+        ln -sf "$repo_help_path" "${target_home}/.zshrc.help"
+    fi
+
+    # Enlazar funciones si el directorio existe
+    if [[ -d "$repo_funcs_path" ]]; then
+        mkdir -p "${target_home}/.zsh_functions"
+        for func_file in "$repo_funcs_path"/*.zsh; do
+            if [[ -f "$func_file" ]]; then
+                ln -sf "$func_file" "${target_home}/.zsh_functions/$(basename "$func_file")"
+            fi
+        done
+        log_success "Funciones de Zsh enlazadas."
     fi
 
     # --- 4. Descargar el tema de Oh My Posh ---

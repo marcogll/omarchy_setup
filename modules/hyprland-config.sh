@@ -12,19 +12,19 @@ source "${SCRIPT_DIR}/icon_manager.sh"
 run_module_main() {
     log_step "Instalación de Configuración de Hyprland"
 
-    # --- 1. Copiar archivos de configuración ---
-    # La configuración de Hyprland debe estar en una carpeta 'hypr_config' en la raíz del repo
-    local source_dir="${SCRIPT_DIR}/../hypr_config"
+    # --- 1. Determinar origen de configuración ---
+    # Usar mg_dotfiles
+    local source_dir="${DOTFILES_DIR}/omarchy/hypr"
     local dest_dir="$HOME/.config/hypr"
 
     if [[ ! -d "$source_dir" ]]; then
-        log_error "No se encontró el directorio de configuración 'hypr_config' en la raíz del repositorio."
-        log_info "Asegúrate de que la carpeta con tu configuración se llame 'hypr_config'."
+        log_error "No se encontró la configuración en '${source_dir}'."
+        log_info "Asegúrate de tener clonado el repositorio 'mg_dotfiles' en la ruta esperada."
         return 1
     fi
 
     # Crear copia de seguridad si ya existe una configuración
-    if [[ -d "$dest_dir" ]]; then
+    if [[ -d "$dest_dir" ]] && [[ ! -L "$dest_dir" ]]; then
         local backup_dir="${dest_dir}.bak_$(date +%F_%T)"
         log_warning "Configuración de Hyprland existente encontrada."
         log_info "Creando copia de seguridad en: ${backup_dir}"
@@ -36,9 +36,15 @@ run_module_main() {
         fi
     fi
 
-    log_info "Copiando la configuración de Hyprland a ${dest_dir}..."
-    # Usamos rsync para una copia eficiente
-    rsync -a --info=progress2 "$source_dir/" "$dest_dir/"
+    log_info "Configurando Hyprland desde ${source_dir}..."
+    if [[ "$source_dir" == "${DOTFILES_DIR}/omarchy/hypr" ]]; then
+        log_info "Creando enlace simbólico a tus dotfiles personales..."
+        ln -sfn "$source_dir" "$dest_dir"
+    else
+        log_info "Copiando configuración local (rsync)..."
+        mkdir -p "$dest_dir"
+        rsync -a --info=progress2 "$source_dir/" "$dest_dir/"
+    fi
 
     # --- 2. Establecer el tema de iconos por defecto ---
     log_info "Estableciendo el tema de iconos por defecto (Tela Nord)..."

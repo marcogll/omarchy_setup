@@ -13,6 +13,9 @@ CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 BOLD='\033[1m'
 
+# Directorio de dotfiles personales
+DOTFILES_DIR="${HOME}/Work/code/mg_dotfiles"
+
 # Funciones de logging
 _maybe_clear_spinner() {
     if declare -F spinner_clear_line >/dev/null; then
