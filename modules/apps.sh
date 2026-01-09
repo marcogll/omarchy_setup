@@ -193,7 +193,7 @@ run_module_main() {
     local AUR_PACKAGES=(
         "visual-studio-code-bin" "cursor-bin" "keyd" "fragments"
         "logiops" "ltunify" "teamviewer" "intel-compute-runtime"
-        "antigravity"
+        "antigravity" "opencode"
     )
 
     # --- Instalación de Paquetes ---
