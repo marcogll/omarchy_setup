@@ -164,7 +164,7 @@ run_module_main() {
     )
     # Paquetes para desarrollo de software.
     local PACMAN_DEV=(
-        python python-pip nodejs npm uv
+        python python-pip nodejs npm uv arduino-cli
     )
     # Paquetes para reproducción y edición multimedia.
     local PACMAN_MULTIMEDIA=(
@@ -193,6 +193,7 @@ run_module_main() {
     local AUR_PACKAGES=(
         "visual-studio-code-bin" "cursor-bin" "keyd" "fragments"
         "logiops" "ltunify" "teamviewer" "intel-compute-runtime"
+        "antigravity"
     )
 
     # --- Instalación de Paquetes ---

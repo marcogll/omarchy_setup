@@ -37,9 +37,10 @@ Es uno de los módulos más extensos y se encarga de la instalación de un conju
 - **Función Principal:** Instalar software esencial de diversas categorías.
 - **Software Instalado:**
     - **Base del Sistema:** `git`, `curl`, `htop`, `btop`, `stow`, `gnome-keyring`, `openssh`, etc.
-    - **Desarrollo:** `python`, `pip`, `nodejs`, `npm`. También instala `nvm` (Node Version Manager) y `Homebrew` para una gestión de paquetes más flexible.
+    - **Desarrollo:** `python`, `pip`, `nodejs`, `npm`, `arduino-cli`. También instala `nvm` (Node Version Manager) y `Homebrew` para una gestión de paquetes más flexible.
     - **Multimedia:** VLC (y sus codecs), Audacity, Inkscape, `yt-dlp` para descargar vídeos.
     - **Red:** FileZilla, Telegram, `speedtest-cli`.
+    - **AUR:** Visual Studio Code, Cursor, Keyd, Fragments, Logiops, TeamViewer, Antigravity.
     - **Drivers para Intel Iris Xe:** Instala todos los paquetes necesarios para el correcto funcionamiento de los gráficos integrados de Intel, incluyendo `mesa`, `vulkan-intel`, y los drivers para la aceleración de vídeo por hardware (VA-API).
 - **Configuraciones Adicionales:**
     - Habilita y configura servicios del sistema como `gnome-keyring-daemon` (para gestión de contraseñas y claves SSH), `keyd` y `logiops` (para teclados y ratones avanzados), `teamviewer` y `tlp` (para la gestión avanzada de energía y optimización de la batería).
