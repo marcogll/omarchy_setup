@@ -1,0 +1,27 @@
+# Archivos sensibles con API keys
+zsh/.zshrc.local
+
+# Historiales
+*.history
+*hist*
+
+# Archivos temporales
+*.tmp
+*.bak
+*.swp
+*~
+
+# Dependencias grandes
+node_modules/
+.oh-my-zsh/
+
+# Archivos de cache
+.zcompcache/
+.thumbnails/
+
+# Archivos específicos de cada sistema
+.DS_Store
+Thumbs.db
+
+# Configs con datos personales
+misc/.gitconfig

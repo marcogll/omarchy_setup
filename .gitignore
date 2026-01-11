@@ -1,2 +1,5 @@
 # Ignorar el directorio de logs generado por el script
 logs/
+
+# Ignorar archivos con secretos (solo ejemplos deben ser versionados)
+mg_dotfiles/zsh/.zshrc.local

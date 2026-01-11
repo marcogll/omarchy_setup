@@ -1,0 +1,50 @@
+# =============================================================================
+#           ZSH LOCAL CONFIGURATION EXAMPLE (NO SECRETOS)
+# =============================================================================
+#
+# Copia este archivo a ~/.zshrc.local para usarlo:
+#   cp mg_dotfiles/zsh/.zshrc.local.example ~/.zshrc.local
+#
+# Este archivo se carga DESPUÉS de .zshrc y te permite agregar
+# configuraciones personalizadas y API keys sin modificar el archivo principal.
+#
+# IMPORTANTE: Este archivo debe contener SOLO configuraciones públicas.
+# Para secretos como API keys, usa variables de entorno o gestores de secretos.
+# =============================================================================
+
+# --- Ejemplo de Alias Personalizados -----------------------------------------
+
+alias myproject='cd ~/Work/code/myproject'
+alias myserver='ssh user@myserver.com'
+
+# --- Ejemplo de Variables de Entorno ----------------------------------------
+
+# NOTA: No pongas API keys reales aquí. Usa en su lugar:
+# - ~/.config/env file (cargado automáticamente)
+# - Environment variables en tu configuración de shell
+# - Secret managers (AWS Secrets Manager, HashiCorp Vault, etc.)
+
+# Ejemplo: export MY_API_KEY="your-api-key-here"  # NO hacerlo aquí
+
+# --- Ejemplo de Funciones Personalizadas -------------------------------------
+
+# Función de ejemplo para conectar a un servicio específico
+myconnect() {
+  echo "Conectando a mi servicio personal..."
+  # Tu lógica aquí
+}
+
+# --- Ejemplo de Configuraciones Específicas del Sistema ----------------------
+
+# Si necesitas configuraciones específicas para un sistema o usuario en particular
+# puedes agregarlas aquí.
+
+# Ejemplo: configurar editor por defecto
+# export EDITOR=vim
+
+# Ejemplo: configurar locale específico
+# export LANG=es_ES.UTF-8
+
+# =============================================================================
+# FIN DEL ARCHIVO DE EJEMPLO
+# =============================================================================

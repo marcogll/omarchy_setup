@@ -2,23 +2,23 @@
 
 Script de configuración **modular** y **personalizado** para **Arch Linux / Omarchy**. Esta herramienta automatiza la instalación de aplicaciones y la vinculación de mis dotfiles personales.
 
+## 📝 Cambios Recientes (v3.5.0)
+
+- **mg_dotfiles integrado**: Los dotfiles ahora están incluidos directamente en el directorio `mg_dotfiles/` de este repositorio, eliminando la dependencia de un repositorio externo.
+- **Seguridad mejorada**: Se agregó `.zshrc.local.example` como plantilla para configuraciones locales sin incluir secretos en el repositorio.
+- **Archivos sensibles**: `.zshrc.local` se encuentra en `.gitignore` para evitar subir API keys accidentalmente.
+
 ## 🎯 Características Principales
 
 - **📦 Arquitectura Modular**: Scripts independientes para cada componente del sistema.
-- **🔗 Integración con Dotfiles**: Vincula automáticamente configuraciones de Zsh y Hyprland desde el repositorio [mg_dotfiles](https://github.com/marcogll/mg_dotfiles).
+- **🔗 Integración con Dotfiles**: Vincula automáticamente configuraciones de Zsh y Hyprland desde el directorio `mg_dotfiles/` incluido en este repositorio.
 - **🎨 Menú Interactivo**: Selecciona exactamente qué componentes deseas configurar.
 - **🔐 Seguridad y Persistencia**: Gestión de sudo optimizada y sincronización con GNOME Keyring.
 
 ## 🚀 Instalación Rápida
 
-Para un setup completo, se recomienda tener clonado el repositorio de dotfiles en `~/Work/code/mg_dotfiles` antes de empezar.
-
 ```bash
-# 1. Clonar dotfiles (Opcional pero recomendado para Zsh/Hyprland)
-mkdir -p ~/Work/code
-git clone https://github.com/marcogll/mg_dotfiles.git ~/Work/code/mg_dotfiles
-
-# 2. Clonar y ejecutar el setup
+# Clonar y ejecutar el setup
 git clone https://github.com/marcogll/omarchy_setup.git
 cd omarchy_setup
 chmod +x omarchy-setup.sh
@@ -50,14 +50,14 @@ omarchy_setup/
 | Opción | Descripción | Dependencia |
 | :--- | :--- | :--- |
 | **1** | **Aplicaciones** | Repositorios Arch/AUR/Flatpak/Homebrew |
-| **2** | **Zsh Config** | Requiere `mg_dotfiles` |
+| **2** | **Zsh Config** | Usa `mg_dotfiles/` incluido |
 | **3** | **Docker** | Docker + Portainer (Web UI) |
 | **5** | **Impresoras** | CUPS + Drivers Epson |
 | **6** | **Cursor** | Tema Bibata Modern Ice |
 | **7** | **Iconos** | Gestor de temas interactivos (Tela, Papirus, Candy) |
 | **7D** | **Iconos por Defecto** | Tela Nord (automático) |
 | **S** | **Suspensión** | Activa opción en menú System |
-| **H** | **Hyprland** | Requiere `mg_dotfiles` |
+| **H** | **Hyprland** | Usa `mg_dotfiles/` incluido |
 | **K** | **SSH Keyring** | Sincroniza llaves con gcr-ssh-agent (GNOME 46+) |
 | **F** | **Formatos Disco** | FAT/exFAT/NTFS/ext4 |
 | **T** | **Plantillas** | Documentos en ~/Templates |
@@ -69,16 +69,26 @@ omarchy_setup/
 
 ## 🎨 Configuraciones de mg_dotfiles
 
-Este repositorio vincula configuraciones personalizadas desde [mg_dotfiles](https://github.com/marcogll/mg_dotfiles):
+Este repositorio incluye configuraciones personalizadas en el directorio `mg_dotfiles/`:
 
 - **Zsh**: Configuración del shell con Oh My Zsh, Oh My Posh, plugins y alias personalizados
+- **Zsh Local**: `.zshrc.local.example` para configuraciones personales sin secretos
 - **Hyprland**: Configuración completa del gestor de ventanas tiling y componentes relacionados
 - **Neovim**: Configuración personalizada de Neovim con plugins y LazyVim (ubicado en `mg_dotfiles/nvim/`)
 
+### Configuración Local
+Para agregar configuraciones personales y API keys:
+```bash
+# Copiar plantilla de ejemplo
+cp mg_dotfiles/zsh/.zshrc.local.example ~/.zshrc.local
+# Editar ~/.zshrc.local para agregar tus configuraciones y API keys
+```
+
+### Neovim
 Para usar la configuración de Neovim:
 ```bash
-# Opcional: Crea un enlace simbólico (si prefieres mantener config en mg_dotfiles)
-ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim
+# Crea un enlace simbólico a nvim incluido en mg_dotfiles/
+ln -s $(pwd)/mg_dotfiles/nvim ~/.config/nvim
 ```
 
 ---
@@ -218,9 +228,9 @@ Configuración personalizada de Neovim disponible en mg_dotfiles.
 
 - **Ubicación:** La configuración se encuentra en `mg_dotfiles/nvim/` y se ha copiado a este repositorio.
 - **Contenido:** Incluye configuración con LazyVim, plugins personalizados, colores y atajos de teclado.
-- **Instalación Manual:** Si deseas vincular la configuración desde mg_dotfiles:
+- **Instalación Manual:** Si deseas vincular la configuración desde mg_dotfiles/:
     ```bash
-    ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim
+    ln -s $(pwd)/mg_dotfiles/nvim ~/.config/nvim
     ```
 - **Nota:** Neovim debe instalarse previamente (ej: `paru -S neovim-git` o `pacman -S neovim`).
 
@@ -238,9 +248,9 @@ Instala una herramienta de VPN.
 
 ## 📝 Notas Importantes
 
-- **Dotfiles**: Este script ahora es **opinionated**. Si no encuentra `mg_dotfiles` en la ruta configurada en `common.sh`, el script mostrará una advertencia y los módulos de Zsh e Hyprland fallarán.
-- **Verificación de mg_dotfiles**: Al iniciar el script, se verifica que `mg_dotfiles` existe en la ruta esperada (`~/Work/code/mg_dotfiles`). Si no se encuentra, se mostrarán instrucciones para clonarlo.
-- **Neovim**: La configuración personalizada de Neovim está disponible en `mg_dotfiles/nvim/`. No se instala automáticamente, pero puede vincularse manualmente con `ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim`.
+- **Dotfiles**: Este script es **opinionated**. Utiliza las configuraciones incluidas en el directorio `mg_dotfiles/` de este repositorio.
+- **Configuración Local**: Usa `.zshrc.local` para agregar configuraciones personales y API keys. Se incluye `.zshrc.local.example` como plantilla sin secretos.
+- **Neovim**: La configuración personalizada de Neovim está disponible en `mg_dotfiles/nvim/`. No se instala automáticamente, pero puede vincularse manualmente con `ln -s $(pwd)/mg_dotfiles/nvim ~/.config/nvim`.
 - **Fuentes**: Es imprescindible usar una **Nerd Font** (ej: `CaskaydiaMono NF` o `ttf-firacode-nerd`) para que los iconos de la terminal y Hyprland se visualicen correctamente.
 - **Reinicio**: Tras la instalación de Docker o el cambio de Shell, es necesario **cerrar sesión** para aplicar los cambios de grupos y entorno.
 - **Logs**: Cada ejecución genera un log en `logs/omarchy-setup-YYYY-MM-DD_HH-MM-SS.log`
@@ -255,4 +265,4 @@ Para añadir una funcionalidad:
 
 ---
 
-**Marco** - [GitHub](https://github.com/marcogll) | [mg_dotfiles](https://github.com/marcogll/mg_dotfiles)
+**Marco** - [GitHub](https://github.com/marcogll)
