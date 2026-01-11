@@ -197,11 +197,6 @@ run_module_main() {
     )
 
     # --- Instalación de Paquetes ---
-    log_info "Actualizando el sistema para evitar conflictos de dependencias..."
-    sudo pacman -Syu --noconfirm || {
-        log_warning "No se pudo completar la actualización del sistema. Pueden ocurrir errores de dependencias."
-    }
-
     log_info "Instalando herramientas base..."
     sudo pacman -S --noconfirm --needed "${PACMAN_BASE[@]}" || {
         log_error "Error al instalar herramientas base"
@@ -299,50 +294,44 @@ run_module_main() {
     
     # --- Configuración de Servicios ---
     log_info "Configurando servicios del sistema..."
-    
-    # Configura GNOME Keyring para que actúe como agente de credenciales y SSH.
+
+    # Configura GNOME Keyring para que actúe como agente de credenciales.
     log_info "Configurando GNOME Keyring como agente de credenciales..."
-    mkdir -p "${HOME}/.config/environment.d"
-    cat <<'EOF' > "${HOME}/.config/environment.d/10-gnome-keyring.conf"
-SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
-EOF
     # Habilita el servicio de GNOME Keyring para el usuario actual.
-    if systemctl --user enable --now gnome-keyring-daemon.socket gnome-keyring-daemon.service >/dev/null 2>&1; then
-        log_success "GNOME Keyring listo para gestionar contraseñas y claves SSH."
+    if systemctl --user enable --now gnome-keyring-daemon.socket >/dev/null 2>&1; then
+        log_success "GNOME Keyring listo para gestionar contraseñas."
     else
         log_warning "No se pudo habilitar gnome-keyring-daemon en systemd de usuario. Verifica que tu sesión use systemd (--user)."
     fi
 
-    # Inicia el daemon de GNOME Keyring en la sesión actual para que `ssh-add` funcione.
-    if command_exists gnome-keyring-daemon; then
-        local keyring_eval
-        keyring_eval="$(gnome-keyring-daemon --start --components=secrets,ssh 2>/dev/null)" || keyring_eval=""
-        if [[ -n "$keyring_eval" ]]; then
-            eval "$keyring_eval"
-        fi
-    fi
-    local keyring_socket="/run/user/$UID/keyring/ssh"
-    if [[ -S "$keyring_socket" ]]; then
-        export SSH_AUTH_SOCK="$keyring_socket"
-    fi
-    log_info "Vuelve a iniciar sesión para que las variables de entorno del keyring se apliquen."
-    
-    log_info "La sincronización de claves SSH se realizará por separado con el módulo 'K' después de reiniciar la sesión."
+    log_info "Las claves SSH se gestionarán con el módulo 'K' (gcr-ssh-agent)."
     
     # Habilita los servicios de las aplicaciones instaladas.
     if command_exists keyd; then
-        log_info "Habilitando servicio keyd..."
-        sudo systemctl enable --now keyd.service 2>/dev/null || true
+        if systemctl is-enabled keyd.service &>/dev/null; then
+            log_info "keyd.service ya está habilitado."
+        else
+            sudo systemctl enable --now keyd.service 2>/dev/null || true
+            log_success "keyd.service habilitado."
+        fi
     fi
-    
+
     if command_exists logiops; then
-        log_info "Habilitando servicio logiops..."
-        sudo systemctl enable --now logiops.service 2>/dev/null || true
+        if systemctl is-enabled logiops.service &>/dev/null; then
+            log_info "logiops.service ya está habilitado."
+        else
+            sudo systemctl enable --now logiops.service 2>/dev/null || true
+            log_success "logiops.service habilitado."
+        fi
     fi
-    
+
     if command_exists teamviewer; then
-        log_info "Habilitando servicio TeamViewer..."
-        sudo systemctl enable --now teamviewerd.service 2>/dev/null || true
+        if systemctl is-enabled teamviewerd.service &>/dev/null; then
+            log_info "teamviewerd.service ya está habilitado."
+        else
+            sudo systemctl enable --now teamviewerd.service 2>/dev/null || true
+            log_success "teamviewerd.service habilitado."
+        fi
         if sudo teamviewer --daemon start >/dev/null 2>&1; then
             log_success "TeamViewer daemon iniciado"
         else
@@ -352,10 +341,16 @@ EOF
     fi
 
     if command_exists tlp; then
-        log_info "Habilitando servicio TLP para gestión de energía..."
-        sudo systemctl enable tlp.service 2>/dev/null || true
-        sudo systemctl start tlp.service 2>/dev/null || true
-        log_success "TLP habilitado e iniciado."
+        if systemctl is-enabled tlp.service &>/dev/null; then
+            log_info "tlp.service ya está habilitado."
+        else
+            sudo systemctl enable tlp.service 2>/dev/null || true
+            log_success "tlp.service habilitado."
+        fi
+        if ! systemctl is-active tlp.service &>/dev/null; then
+            sudo systemctl start tlp.service 2>/dev/null || true
+            log_success "tlp.service iniciado."
+        fi
     fi
     
     log_success "Aplicaciones instaladas correctamente"

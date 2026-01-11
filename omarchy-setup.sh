@@ -25,6 +25,14 @@ if [[ ! -d "${MODULES_DIR}" ]] || [[ ! -f "${MODULES_DIR}/common.sh" ]]; then
     exit 1
 fi
 
+# Verificar mg_dotfiles si se va a usar Zsh o Hyprland
+if [[ ! -d "${DOTFILES_DIR:-}" ]]; then
+    echo -e "\033[0;33m⚠ Advertencia: mg_dotfiles no encontrado en ${DOTFILES_DIR}\033[0m"
+    echo "Opciones 2 (Zsh) y H (Hyprland) requieren mg_dotfiles."
+    echo "Ejecuta: git clone https://github.com/marcogll/mg_dotfiles.git ${DOTFILES_DIR}"
+    echo ""
+fi
+
 # Cargar funciones comunes
 source "${MODULES_DIR}/common.sh"
 
@@ -281,9 +289,15 @@ run_module_with_retry() {
 # Función para instalar todo
 install_all() {
     log_step "Instalación Completa de Omarchy"
-    
+
     local failed=()
-    
+
+    # Actualizar el sistema antes de instalar todo
+    log_info "Actualizando el sistema antes de la instalación..."
+    if ! update_system; then
+        log_warning "La actualización del sistema falló. Continuando con la instalación..."
+    fi
+
     for choice in "${INSTALL_ALL_CHOICES[@]}"; do
         IFS=';' read -r module_file _ description type <<< "${MODULES[$choice]}"
 

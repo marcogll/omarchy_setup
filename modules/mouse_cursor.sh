@@ -45,6 +45,8 @@ install_mouse_cursor() {
     fi
 
     # --- Paso 3: Configurar variables de entorno para Hyprland ---
+    # Nota: Esto configura el cursor para aplicaciones X11 y Hyprland.
+    # Para aplicaciones GTK/Flatpak, se usa gsettings en el Paso 4.
     if [ -f "$ENVS_FILE" ]; then
         log_info "Configurando variables de entorno en $ENVS_FILE..."
         if ! grep -q "HYPRCURSOR_THEME,${CURSOR_THEME}" "$ENVS_FILE"; then

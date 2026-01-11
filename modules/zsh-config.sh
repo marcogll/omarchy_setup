@@ -41,14 +41,10 @@ install_zsh() {
     # --- 1. Instalar paquetes necesarios desde Pacman ---
     log_info "Instalando Zsh y herramientas esenciales..."
     local pkgs=(
-        git
         zsh
         zsh-completions
         zsh-syntax-highlighting
         zsh-autosuggestions
-        zoxide              # Navegación inteligente
-        fastfetch           # Información del sistema
-        yt-dlp              # Descarga de videos/audio
         unrar p7zip lsof    # Dependencias para funciones en .zshrc
     )
     for pkg in "${pkgs[@]}"; do
@@ -156,7 +152,9 @@ install_zsh() {
     fi
 
     # Crear copia de seguridad antes de proceder
-    backup_file "${target_home}/.zshrc" || return 1
+    if ! backup_file "${target_home}/.zshrc"; then
+        log_warning "No se pudo crear backup de .zshrc. Sobrescribiendo de todas formas."
+    fi
 
     log_success "Enlazando .zshrc desde mg_dotfiles..."
     ln -sf "$repo_zshrc_path" "${target_home}/.zshrc"
@@ -237,9 +235,9 @@ if [ -t 1 ]; then
 fi'
     if [[ -f "${target_home}/.bashrc" ]] && ! grep -q "exec zsh" "${target_home}/.bashrc"; then
         log_info "Configurando .bashrc para iniciar Zsh automáticamente..."
-        echo "$bashrc_zsh_loader" >> "${target_home}/.bashrc"
+        echo -e "\n# Launch Zsh (added by omarchy-setup)\n$bashrc_zsh_loader" >> "${target_home}/.bashrc"
     else
-        log_info ".bashrc ya está configurado para lanzar Zsh."
+        log_info ".bashrc ya está configurado para lanzar Zsh o no existe."
     fi
 
     # --- 7. Mensaje final ---
