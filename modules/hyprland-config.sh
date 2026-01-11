@@ -51,6 +51,18 @@ run_module_main() {
     # Llamamos a la función específica de icon_manager.sh
     set_default_icon_theme
 
+    # --- 3. Activar opción de suspensión en el menú System ---
+    log_info "Activando opción de suspensión en el menú System..."
+    if command -v omarchy-toggle-suspend &>/dev/null; then
+        if omarchy-toggle-suspend; then
+            log_success "Opción de suspensión activada en el menú System."
+        else
+            log_warning "No se pudo activar la opción de suspensión, pero la configuración de Hyprland se instaló correctamente."
+        fi
+    else
+        log_warning "Comando omarchy-toggle-suspend no encontrado. Omitiendo activación de suspensión."
+    fi
+
     log_success "Configuración de Hyprland instalada correctamente."
     log_warning "Por favor, cierra sesión y vuelve a iniciarla para aplicar los cambios."
     return 0

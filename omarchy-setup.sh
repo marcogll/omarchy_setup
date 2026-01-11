@@ -132,6 +132,7 @@ MODULES=(
     ["6"]="mouse_cursor;install_mouse_cursor;🖱️ Instalar Tema de Cursor (Bibata);bg"
     ["7"]="icon_manager;run_module_main;🎨 Gestionar Temas de Iconos (Papirus, Tela, etc.);fg"
     ["7D"]="icon_manager;set_default_icon_theme;🎨 Instalar Tema de Iconos por Defecto;bg"
+    ["S"]="suspend;run_module_main;🌙 Activar Suspensión en Menú System;bg"
     ["K"]="ssh-keyring;sync_ssh_keyring;🔐 Sincronizar claves SSH con GNOME Keyring;fg"
     ["F"]="disk-format;run_module_main;💾 Habilitar Formatos FAT/exFAT/NTFS/ext4;bg"
     ["H"]="hyprland-config;run_module_main;🎨 Instalar Configuración de Hyprland;bg"

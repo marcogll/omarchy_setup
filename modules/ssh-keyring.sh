@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ===============================================================
-# ssh-keyring.sh - Sincronizar claves SSH con GNOME Keyring
+# ssh-keyring.sh - Sincronizar claves SSH con gcr-ssh-agent
 # ===============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -20,12 +20,7 @@ _derive_fingerprint() {
 }
 
 sync_ssh_keyring() {
-    log_step "Sincronizar claves SSH con GNOME Keyring"
-
-    if ! command_exists gnome-keyring-daemon; then
-        log_error "gnome-keyring-daemon no está instalado. Ejecuta primero el módulo de aplicaciones."
-        return 1
-    fi
+    log_step "Sincronizar claves SSH con gcr-ssh-agent"
 
     if ! command_exists ssh-add; then
         log_error "ssh-add no está disponible (openssh). Instala el módulo de aplicaciones antes."
@@ -34,32 +29,40 @@ sync_ssh_keyring() {
 
     mkdir -p "${HOME}/.config/environment.d"
     cat <<'EOF' > "${HOME}/.config/environment.d/10-gnome-keyring.conf"
-SSH_AUTH_SOCK=/run/user/$UID/keyring/ssh
+SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/gcr/ssh
 EOF
 
-    # No intentamos iniciar el daemon. Después de un reinicio de sesión, ya debería estar activo.
-    log_info "Buscando el socket del agente de GNOME Keyring..."
+    log_info "Verificando servicio gcr-ssh-agent.socket..."
 
-    # Obtenemos el UID del usuario dueño del directorio HOME. Este método es más fiable.
-    local target_uid
-    target_uid=$(stat -c '%u' "$HOME")
-
-    local keyring_socket="/run/user/${target_uid}/keyring/ssh"
-
-    # Obtenemos el UID del usuario dueño del directorio HOME. Este método es más fiable.
-    local target_uid
-    target_uid=$(stat -c '%u' "$HOME")
-
-    local keyring_socket="/run/user/${target_uid}/keyring/ssh"
-
-    if [[ ! -S "$keyring_socket" ]]; then
-        log_error "No se encontró el socket de GNOME Keyring en la ruta esperada: ${keyring_socket}"
-        log_warning "Esto usualmente significa que el servicio no se ha iniciado correctamente con tu sesión de escritorio."
-        log_info "Asegúrate de haber cerrado y vuelto a abrir tu sesión después de instalar el módulo de aplicaciones."
-        return 1
+    if ! systemctl --user is-enabled gcr-ssh-agent.socket &>/dev/null; then
+        log_info "Habilitando gcr-ssh-agent.socket..."
+        systemctl --user enable gcr-ssh-agent.socket
     fi
 
-    log_success "Socket de GNOME Keyring encontrado en: ${keyring_socket}"
+    if ! systemctl --user is-active gcr-ssh-agent.socket &>/dev/null; then
+        log_info "Iniciando gcr-ssh-agent.socket..."
+        systemctl --user start gcr-ssh-agent.socket
+    fi
+
+    log_info "Buscando el socket del agente GCR SSH..."
+
+    local target_uid
+    target_uid=$(stat -c '%u' "$HOME")
+
+    local keyring_socket="/run/user/${target_uid}/gcr/ssh"
+
+    if [[ ! -S "$keyring_socket" ]]; then
+        log_error "No se encontró el socket de gcr-ssh-agent en la ruta esperada: ${keyring_socket}"
+        log_warning "Intentando activar el socket solicitando el servicio..."
+        if SSH_AUTH_SOCK="$keyring_socket" ssh-add -l &>/dev/null; then
+            log_success "Socket de gcr-ssh-agent activado correctamente."
+        else
+            log_error "No se pudo activar el socket. Revisa la configuración de gcr-ssh-agent."
+            return 1
+        fi
+    fi
+
+    log_success "Socket de gcr-ssh-agent encontrado en: ${keyring_socket}"
     export SSH_AUTH_SOCK="$keyring_socket"
 
     local ssh_dir="${HOME}/.ssh"
@@ -120,7 +123,7 @@ EOF
     done
 
     if [[ $added -gt 0 ]]; then
-        log_success "Claves SSH sincronizadas con GNOME Keyring."
+        log_success "Claves SSH sincronizadas con gcr-ssh-agent."
     else
         log_info "No se añadieron nuevas claves SSH."
     fi
