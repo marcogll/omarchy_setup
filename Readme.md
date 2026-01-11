@@ -36,6 +36,10 @@ omarchy_setup/
 │   ├── zsh-config.sh       # Enlaza .zshrc y funciones desde mg_dotfiles
 │   ├── hyprland-config.sh  # Enlaza configs de Hyprland desde mg_dotfiles
 │   └── ...                 # Docker, ZeroTier, Impresoras, etc.
+├── mg_dotfiles/            # Dotfiles personales (Zsh, Hyprland, Neovim)
+│   ├── zsh/                # Configuración de Zsh
+│   ├── omarchy/hypr/       # Configuración de Hyprland
+│   └── nvim/               # Configuración de Neovim (LazyVim)
 ├── doc_templates/          # Plantillas para ~/Templates
 ├── themes/                 # Temas de apoyo (Oh My Posh)
 └── installed_software.md   # Lista detallada de componentes instalados
@@ -57,6 +61,24 @@ omarchy_setup/
 | **F** | **Formatos Disco** | FAT/exFAT/NTFS/ext4 |
 | **T** | **Plantillas** | Documentos en ~/Templates |
 | **A** | **Instalar Todo** | Ejecuta la mayoría de los módulos |
+
+> **Nota:** Neovim debe instalarse manualmente (ej: `paru -S neovim-git`) y su configuración está disponible en `mg_dotfiles/nvim/`.
+
+---
+
+## 🎨 Configuraciones de mg_dotfiles
+
+Este repositorio vincula configuraciones personalizadas desde [mg_dotfiles](https://github.com/marcogll/mg_dotfiles):
+
+- **Zsh**: Configuración del shell con Oh My Zsh, Oh My Posh, plugins y alias personalizados
+- **Hyprland**: Configuración completa del gestor de ventanas tiling y componentes relacionados
+- **Neovim**: Configuración personalizada de Neovim con plugins y LazyVim (ubicado en `mg_dotfiles/nvim/`)
+
+Para usar la configuración de Neovim:
+```bash
+# Opcional: Crea un enlace simbólico (si prefieres mantener config en mg_dotfiles)
+ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim
+```
 
 ---
 
@@ -186,7 +208,19 @@ Mejora la gestión de claves SSH.
     - **Importancia:** Evita tener que escribir la contraseña de la clave SSH cada vez que se establece una conexión.
     - **Nota:** A partir de gnome-keyring 46.0+, la funcionalidad SSH fue movida a `gcr`, por lo que este módulo ahora usa `gcr-ssh-agent` en lugar del componente SSH de `gnome-keyring`.
 
-#### 2.11. `zerotier.sh`
+#### 2.11. Neovim (mg_dotfiles)
+
+Configuración personalizada de Neovim disponible en mg_dotfiles.
+
+- **Ubicación:** La configuración se encuentra en `mg_dotfiles/nvim/` y se ha copiado a este repositorio.
+- **Contenido:** Incluye configuración con LazyVim, plugins personalizados, colores y atajos de teclado.
+- **Instalación Manual:** Si deseas vincular la configuración desde mg_dotfiles:
+    ```bash
+    ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim
+    ```
+- **Nota:** Neovim debe instalarse previamente (ej: `paru -S neovim-git` o `pacman -S neovim`).
+
+#### 2.12. `zerotier.sh`
 
 Instala una herramienta de VPN.
 
@@ -201,6 +235,7 @@ Instala una herramienta de VPN.
 ## 📝 Notas Importantes
 
 - **Dotfiles**: Este script ahora es **opinionated**. Si no encuentra `mg_dotfiles` en la ruta configurada en `common.sh`, los módulos de Zsh e Hyprland fallarán.
+- **Neovim**: La configuración personalizada de Neovim está disponible en `mg_dotfiles/nvim/`. No se instala automáticamente, pero puede vincularse manualmente con `ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim`.
 - **Fuentes**: Es imprescindible usar una **Nerd Font** (ej: `CaskaydiaMono NF` o `ttf-firacode-nerd`) para que los iconos de la terminal y Hyprland se visualicen correctamente.
 - **Reinicio**: Tras la instalación de Docker o el cambio de Shell, es necesario **cerrar sesión** para aplicar los cambios de grupos y entorno.
 - **Logs**: Cada ejecución genera un log en `logs/omarchy-setup-YYYY-MM-DD_HH-MM-SS.log`

@@ -13,7 +13,7 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 - `git`: Control de versiones
 - `curl` y `wget`: Descarga de archivos
 - `vim`: Editor de texto
-- `neovim`: Editor de texto moderno
+- `neovim`: Editor de texto moderno (instalado manualmente por el usuario)
 - `tree`: Visualizador de directorios en árbol
 - `htop`: Monitor de procesos
 - `btop`: Monitor de procesos mejorado
@@ -41,6 +41,7 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 - `code-marketplace`: Extensión para VS Code marketplace
 - `v3dv-git`: Drivers para Raspberry Pi
 - `xdg-desktop-portal-hyprland`: Portal para Hyprland
+- `neovim-git`: Editor de texto moderno (versión bleeding edge, instalación manual)
 
 ### Paquetes instalados desde Flatpak:
 - VLC: Reproductor multimedia
@@ -167,6 +168,22 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 
 ---
 
+## ✏️ Neovim (mg_dotfiles)
+
+### Configuración disponible:
+- La configuración personalizada de Neovim está disponible en `mg_dotfiles/nvim/`
+- Incluye LazyVim, plugins personalizados, colores y atajos de teclado
+
+### Pasos para vincular (opcional):
+1. Neovim debe estar instalado previamente (ej: `paru -S neovim-git` o `pacman -S neovim`)
+2. Para vincular la configuración desde mg_dotfiles:
+   ```bash
+   ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim
+   ```
+3. Al abrir Neovim, se instalarán automáticamente los plugins mediante Lazy.nvim
+
+---
+
 ## 📄 Opción T: Plantillas de Documentos
 
 ### Pasos realizados:
@@ -194,14 +211,15 @@ F. Formatos de Disco
 H. Hyprland
 T. Plantillas de Documentos
 
-**Nota:** No ejecuta la opción 7 (Gestor Interactivo de Iconos) porque requiere selección manual.
+**Nota:** No ejecuta la opción 7 (Gestor Interactivo de Iconos) porque requiere selección manual. Neovim debe instalarse y configurarse manualmente según las instrucciones en la sección de Neovim.
 
 ---
 
 ## 📝 Notas para el Equipo
 
 - **Actualización de este documento**: Cuando se agreguen nuevos módulos o software a los scripts existentes, actualizar este archivo para mantener la lista sincronizada.
-- **Dotfiles**: Las configuraciones de Zsh y Hyprland se crean como enlaces simbólicos a `mg_dotfiles`. Cualquier cambio en los archivos originales se refleja inmediatamente.
+- **Dotfiles**: Las configuraciones de Zsh, Hyprland y Neovim se encuentran en `mg_dotfiles`. Zsh y Hyprland se crean como enlaces simbólicos automáticamente. Neovim puede vincularse manualmente según preferencia.
+- **Neovim**: La configuración de Neovim no se instala automáticamente con el script. Debe instalarse previamente (ej: `paru -S neovim-git`) y la configuración en `mg_dotfiles/nvim/` está disponible para ser copiada o enlazada.
 - **Fuentes**: Asegurarse de instalar una **Nerd Font** para que los iconos se vean correctamente.
 - **Reiniciar**: Cerrar sesión después de instalar para aplicar cambios de grupos (Docker) y variables de entorno.
 - **Logs**: Cada ejecución genera un log en `logs/omarchy-setup-YYYY-MM-DD_HH-MM-SS.log`
