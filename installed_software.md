@@ -13,27 +13,80 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 - `git`: Control de versiones
 - `curl` y `wget`: Descarga de archivos
 - `vim`: Editor de texto
-- `neovim`: Editor de texto moderno (instalado manualmente por el usuario)
-- `tree`: Visualizador de directorios en árbol
+- `nano`: Editor de texto
 - `htop`: Monitor de procesos
 - `btop`: Monitor de procesos mejorado
-- `ripgrep` (rg): Buscador de archivos rápido
-- `fd`: Buscador de archivos alternativo
-- `bat`: Clon de cat con mejoras
-- `eza`: Alternativa moderna a ls
-- `fzf`: Buscador interactivo
+- `fastfetch`: Información del sistema
+- `zoxide`: Navegación inteligente de directorios
 - `tmux`: Terminal multiplexor
-- `jq`: Procesador JSON
-- `unzip`: Descompresor ZIP
-- `p7zip`: Descompresor 7z
-- `zip`: Compresor ZIP
-- `xdg-utils`: Herramientas de integración con el escritorio
-- `bluez` y `bluez-utils`: Soporte Bluetooth
-- `pipewire` y `wireplumber`: Audio y video
-- `noto-fonts`: Fuente base
-- `noto-fonts-cjk`: Fuentes CJK (Chino, Japonés, Coreano)
-- `ttf-firacode-nerd`: Fuente con iconos Nerd
-- `intel-media-driver`: Drivers para GPU Intel
+- `xdg-utils` y `xdg-user-dirs`: Herramientas de integración con el escritorio
+- `stow`: Gestión de dotfiles
+- `gnome-keyring`: Gestión de contraseñas
+- `libsecret`: Librería para gestión de secretos
+- `seahorse`: Interfaz gráfica para GNOME Keyring
+- `openssh`: Cliente/servidor SSH
+- `rsync`: Sincronización de archivos
+- `usbutils`: Herramientas para USB
+- `tlp`: Gestión de energía y optimización de batería
+
+### Desarrollo:
+- `python` y `python-pip`: Python y su gestor de paquetes
+- `nodejs` y `npm`: Node.js y su gestor de paquetes
+- `uv`: Gestor de paquetes Python rápido
+- `arduino-cli`: Herramientas de línea de comandos para Arduino
+
+### Multimedia:
+- `vlc`: Reproductor multimedia
+- `vlc-plugins-all`: Plugins para VLC
+- `libdvdcss`: Soporte para DVD
+- `audacity`: Editor de audio
+- `inkscape`: Editor de gráficos vectoriales
+- `ffmpeg`: Framework multimedia
+- `gstreamer`: Framework multimedia
+- `gst-plugins-good`, `gst-plugins-bad`, `gst-plugins-ugly`: Plugins de GStreamer
+- `yt-dlp`: Descarga de videos/audio
+- `alsa-utils`: Herramientas de audio ALSA
+- `pavucontrol`: Control de volumen PulseAudio
+
+### Red:
+- `filezilla`: Cliente FTP
+- `telegram-desktop`: Cliente de mensajería
+- `scrcpy`: Mirroring de dispositivos Android
+- `speedtest-cli`: Prueba de velocidad de conexión
+
+### Flatpak:
+- `flatpak`: Gestor de paquetes Flatpak
+
+### Drivers Intel Iris Xe:
+- `mesa`: Drivers gráficos
+- `vulkan-intel`: Soporte Vulkan para Intel
+- `lib32-mesa`: Drivers 32-bit
+- `lib32-vulkan-intel`: Soporte Vulkan 32-bit
+- `intel-media-driver`: Drivers para decodificación de video
+- `libva-utils`: Utilidades VA-API
+- `libvdpau-va-gl`: Puente VDPAU a VA-API
+- `libva-mesa-driver`: Driver VA-API de Mesa
+- `libva-intel-driver`: Driver VA-API de Intel
+- `onevpl-intel-gpu`: Intel oneAPI Video Processing Library
+- `ocl-icd`: OpenCL ICD Loader
+- `libclc`: Biblioteca OpenCL C
+- `clinfo`: Información de dispositivos OpenCL
+
+### Paquetes instalados desde AUR:
+- `visual-studio-code-bin`: Editor de código
+- `cursor-bin`: Editor de código AI-powered
+- `keyd`: Remapeo de teclas a nivel de kernel
+- `fragments`: Cliente de torrent para GNOME
+- `logiops`: Configuración de dispositivos Logitech
+- `ltunify`: Herramienta para Unifying Receiver
+- `teamviewer`: Soporte remoto
+- `intel-compute-runtime`: OpenCL para Intel
+- `antigravity`: Herramienta de gestión de energía
+- `opencode`: Herramienta de IA para desarrolladores
+
+### Otros:
+- NVM (Node Version Manager): Gestión de versiones de Node.js
+- Homebrew (Linuxbrew): Gestor de paquetes alternativo
 
 ### Paquetes instalados desde AUR:
 - `google-chrome`: Navegador web
@@ -51,14 +104,30 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 
 ## 🐚 Opción 2: Configurar Zsh
 
+### Paquetes instalados desde Pacman:
+- `zsh`: Shell Zsh
+- `zsh-completions`: Completaciones para Zsh
+- `zsh-syntax-highlighting`: Coloreado de sintaxis
+- `zsh-autosuggestions`: Sugestiones de comandos
+- `unrar` y `p7zip`: Descompresores (dependencias para funciones en .zshrc)
+- `lsof`: Listado de archivos abiertos (dependencia para funciones en .zshrc)
+
+### Notas:
+- `git`, `zoxide`, `fastfetch` y `yt-dlp` se instalan en la Opción 1 (Aplicaciones) para evitar duplicidades.
+
 ### Pasos realizados:
-1. Instala `zsh` desde pacman
-2. Cambia el shell del usuario a Zsh
-3. Clona `oh-my-zsh` en `~/.oh-my-zsh`
-4. Instala `oh-my-posh` desde binario
-5. Descarga tema de Oh My Posh (CaskaydiaCove)
+1. Instala Zsh y dependencias desde pacman
+2. Instala Oh My Zsh en `~/.oh-my-zsh`
+3. Instala Oh My Posh (desde pacman, AUR o script oficial)
+4. Descarga tema de Oh My Posh (Catppuccin Frappe)
+5. Clona plugins de Oh My Zsh:
+   - `zsh-autosuggestions`
+   - `zsh-syntax-highlighting`
 6. Crea enlace simbólico de `~/.zshrc` desde `mg_dotfiles`
-7. Instala plugins de Zsh: `zsh-autosuggestions`, `zsh-syntax-highlighting`, `zsh-completions`
+7. Crea enlace simbólico de `~/.zshrc.help` desde `mg_dotfiles`
+8. Crea enlaces simbólicos de funciones en `~/.zsh_functions/` desde `mg_dotfiles`
+9. Cambia el shell del usuario a Zsh
+10. Configura `.bashrc` para ejecutar `exec zsh` automáticamente en terminales interactivas
 
 ---
 
@@ -96,12 +165,23 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 
 ---
 
-## 🖱️ Opción 6: Cursor
+## 🖱️ Opción 6: Cursor (Bibata Modern Ice)
 
 ### Pasos realizados:
-1. Descarga tema de cursor Bibata Modern Ice desde GitHub
-2. Descomprime en `/usr/share/icons`
-3. Ejecuta `update-alternatives` para configurar el cursor por defecto
+1. Descarga tema de cursor Bibata Modern Ice desde GitHub (v2.0.7)
+2. Descomprime e instala en `~/.icons/`
+3. Configura variables de entorno en `~/.config/hypr/envs.conf`:
+   - `HYPRCURSOR_THEME=Bibata-Modern-Ice`
+   - `HYPRCURSOR_SIZE=24`
+   - `XCURSOR_THEME=Bibata-Modern-Ice`
+   - `XCURSOR_SIZE=24`
+4. Configura cursor para aplicaciones GTK usando `gsettings`:
+   - Tema: `Bibata-Modern-Ice`
+   - Tamaño: `24`
+
+### Nota:
+- Las variables de entorno configuran el cursor para aplicaciones X11 y Hyprland.
+- `gsettings` configura el cursor para aplicaciones GTK y Flatpak.
 
 ---
 
@@ -134,16 +214,22 @@ Este documento lista todos los componentes que se instalan al ejecutar el script
 
 ---
 
-## 🔐 Opción K: SSH Keyring
+## 🔐 Opción K: SSH Keyring (gcr-ssh-agent)
 
 ### Pasos realizados:
 1. Verifica que `ssh-add` está disponible (openssh)
-2. Habilita e inicia el servicio `gcr-ssh-agent.socket`
-3. Configura `SSH_AUTH_SOCK` en `$XDG_RUNTIME_DIR/gcr/ssh`
-4. Busca todas las claves SSH privadas en `~/.ssh/`
-5. Añade cada clave al agente usando `ssh-add`
-6. La primera vez, gcr-ssh-agent pide la passphrase y la guarda en el keyring
-7. En futuras conexiones, desbloquea automáticamente la clave
+2. Crea archivo de configuración `~/.config/environment.d/10-gnome-keyring.conf` con:
+   - `SSH_AUTH_SOCK=$XDG_RUNTIME_DIR/gcr/ssh`
+3. Habilita e inicia el servicio `gcr-ssh-agent.socket`
+4. Busca el socket del agente en `/run/user/$UID/gcr/ssh`
+5. Busca todas las claves SSH privadas en `~/.ssh/`
+6. Añade cada clave al agente usando `ssh-add`
+7. La primera vez, gcr-ssh-agent pide la passphrase y la guarda en el keyring
+8. En futuras conexiones, desbloquea automáticamente la clave
+
+### Nota:
+- Este módulo usa `gcr-ssh-agent` (para GNOME 46+) en lugar del componente SSH de `gnome-keyring`.
+- La gestión de SSH fue movida de `gnome-keyring` a `gcr` en versiones recientes.
 
 ---
 
@@ -218,8 +304,11 @@ T. Plantillas de Documentos
 ## 📝 Notas para el Equipo
 
 - **Actualización de este documento**: Cuando se agreguen nuevos módulos o software a los scripts existentes, actualizar este archivo para mantener la lista sincronizada.
-- **Dotfiles**: Las configuraciones de Zsh, Hyprland y Neovim se encuentran en `mg_dotfiles`. Zsh y Hyprland se crean como enlaces simbólicos automáticamente. Neovim puede vincularse manualmente según preferencia.
+- **Dotfiles**: Las configuraciones de Zsh, Hyprland y Neovim se encuentran en `mg_dotfiles`. El script verifica que `mg_dotfiles` exista en `~/Work/code/mg_dotfiles` al inicio. Si no existe, muestra una advertencia. Zsh y Hyprland se crean como enlaces simbólicos automáticamente. Neovim puede vincularse manualmente según preferencia.
 - **Neovim**: La configuración de Neovim no se instala automáticamente con el script. Debe instalarse previamente (ej: `paru -S neovim-git`) y la configuración en `mg_dotfiles/nvim/` está disponible para ser copiada o enlazada.
+- **Paquetes duplicados**: Para evitar redundancia, algunos paquetes se instalan en el módulo `apps.sh` y se reutilizan en otros módulos. Ejemplo: `git`, `zoxide`, `fastfetch`, `yt-dlp`.
+- **SSH Keyring**: A partir de GNOME 46+, la funcionalidad SSH fue movida de `gnome-keyring` a `gcr`. El módulo `apps.sh` ahora solo configura GNOME Keyring para gestión de contraseñas, mientras que el módulo `ssh-keyring.sh` gestiona las claves SSH usando `gcr-ssh-agent`.
+- **Servicios**: Los servicios (`keyd`, `logiops`, `teamviewerd`, `tlp`) ahora verifican si ya están habilitados antes de intentar habilitarlos nuevamente.
 - **Fuentes**: Asegurarse de instalar una **Nerd Font** para que los iconos se vean correctamente.
 - **Reiniciar**: Cerrar sesión después de instalar para aplicar cambios de grupos (Docker) y variables de entorno.
 - **Logs**: Cada ejecución genera un log en `logs/omarchy-setup-YYYY-MM-DD_HH-MM-SS.log`

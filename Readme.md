@@ -49,15 +49,16 @@ omarchy_setup/
 
 | Opción | Descripción | Dependencia |
 | :--- | :--- | :--- |
-| **1** | **Aplicaciones** | Repositorios Arch/AUR/Flatpak |
+| **1** | **Aplicaciones** | Repositorios Arch/AUR/Flatpak/Homebrew |
 | **2** | **Zsh Config** | Requiere `mg_dotfiles` |
 | **3** | **Docker** | Docker + Portainer (Web UI) |
-| **5** | **Impresoras** | CUPS + Drivers |
-| **6** | **Cursor** | Tema Bibata |
-| **7** | **Iconos** | Gestor de temas interactivos |
+| **5** | **Impresoras** | CUPS + Drivers Epson |
+| **6** | **Cursor** | Tema Bibata Modern Ice |
+| **7** | **Iconos** | Gestor de temas interactivos (Tela, Papirus, Candy) |
+| **7D** | **Iconos por Defecto** | Tela Nord (automático) |
 | **S** | **Suspensión** | Activa opción en menú System |
 | **H** | **Hyprland** | Requiere `mg_dotfiles` |
-| **K** | **SSH Keyring** | Sincroniza llaves con gcr-ssh-agent |
+| **K** | **SSH Keyring** | Sincroniza llaves con gcr-ssh-agent (GNOME 46+) |
 | **F** | **Formatos Disco** | FAT/exFAT/NTFS/ext4 |
 | **T** | **Plantillas** | Documentos en ~/Templates |
 | **A** | **Instalar Todo** | Ejecuta la mayoría de los módulos |
@@ -91,11 +92,12 @@ Este es el script orquestador y el punto de entrada para el usuario.
 - **Función Principal:** Proporcionar una interfaz de menú interactiva que permite al usuario seleccionar qué módulos de configuración desea ejecutar.
 - **Características Clave:**
     - **Menú Dinámico:** Muestra una lista de todos los módulos disponibles, permitiendo al usuario elegir uno, varios ("Instalar Todo") o salir.
-    - **Gestión de `sudo`:** Solicita la contraseña de `sudo` una vez y la mantiene activa en segundo plano para evitar que el usuario tenga que introducirla repetidamente.
-    - **Ejecución Modular:** Llama a las funciones principales de los scripts ubicados en el directorio `modules/`.
-    - **Feedback Visual:** Implementa un "spinner" (indicador de progreso) para las tareas que se ejecutan en segundo plano, mejorando la experiencia del usuario.
-    - **Registro (`Logging`):** Guarda un registro detallado de toda la sesión de instalación en el directorio `logs/`, lo que facilita la depuración en caso de errores.
-    - **Verificación del Sistema:** Comprueba que el script se está ejecutando en Arch Linux antes de proceder.
+     - **Gestión de `sudo`:** Solicita la contraseña de `sudo` una vez y la mantiene activa en segundo plano para evitar que el usuario tenga que introducirla repetidamente.
+     - **Ejecución Modular:** Llama a las funciones principales de los scripts ubicados en el directorio `modules/`.
+     - **Feedback Visual:** Implementa un "spinner" (indicador de progreso) para las tareas que se ejecutan en segundo plano, mejorando la experiencia del usuario.
+     - **Registro (`Logging`):** Guarda un registro detallado de toda la sesión de instalación en el directorio `logs/`, lo que facilita la depuración en caso de errores.
+     - **Verificación del Sistema:** Comprueba que el script se está ejecutando en Arch Linux antes de proceder.
+     - **Verificación de Dependencias:** Verifica que `mg_dotfiles` exista en la ruta esperada antes de ejecutar módulos que lo requieren.
 
 ### 2. Módulos (`modules/`)
 
@@ -118,14 +120,15 @@ Es uno de los módulos más extensos y se encarga de la instalación de un conju
 
 - **Función Principal:** Instalar software esencial de diversas categorías.
 - **Software Instalado:**
-    - **Base del Sistema:** `git`, `curl`, `htop`, `btop`, `stow`, `gnome-keyring`, `openssh`, etc.
-    - **Desarrollo:** `python`, `pip`, `nodejs`, `npm`, `arduino-cli`. También instala `nvm` (Node Version Manager) y `Homebrew` para una gestión de paquetes más flexible.
-    - **Multimedia:** VLC (y sus codecs), Audacity, Inkscape, `yt-dlp` para descargar vídeos.
-    - **Red:** FileZilla, Telegram, `speedtest-cli`.
-    - **AUR:** Visual Studio Code, Cursor, Keyd, Fragments, Logiops, TeamViewer, Antigravity, OpenCode.
-    - **Drivers para Intel Iris Xe:** Instala todos los paquetes necesarios para el correcto funcionamiento de los gráficos integrados de Intel, incluyendo `mesa`, `vulkan-intel`, y los drivers para la aceleración de vídeo por hardware (VA-API).
+    - **Base del Sistema:** `git`, `curl`, `wget`, `htop`, `btop`, `fastfetch`, `zoxide`, `stow`, `gnome-keyring`, `openssh`, `rsync`, `usbutils`, `tlp`.
+    - **Desarrollo:** `python`, `python-pip`, `nodejs`, `npm`, `uv`, `arduino-cli`. También instala `nvm` (Node Version Manager) y `Homebrew` para una gestión de paquetes más flexible.
+    - **Multimedia:** VLC (y sus codecs), Audacity, Inkscape, `ffmpeg`, `gstreamer`, `gst-plugins-*`, `yt-dlp` para descargar vídeos, herramientas de audio ALSA y pulseaudio.
+    - **Red:** FileZilla, Telegram, `scrcpy`, `speedtest-cli`.
+    - **AUR:** Visual Studio Code, Cursor, Keyd, Fragments, Logiops, TeamViewer, Antigravity, OpenCode, Intel Compute Runtime.
+    - **Drivers para Intel Iris Xe:** Instala todos los paquetes necesarios para el correcto funcionamiento de los gráficos integrados de Intel, incluyendo `mesa`, `vulkan-intel`, `lib32-mesa`, `lib32-vulkan-intel`, y los drivers para la aceleración de vídeo por hardware (VA-API), OpenCL e Intel Compute Runtime.
 - **Configuraciones Adicionales:**
-    - Habilita y configura servicios del sistema como `gnome-keyring-daemon` (para gestión de contraseñas y claves SSH), `keyd` y `logiops` (para teclados y ratones avanzados), `teamviewer` y `tlp` (para la gestión avanzada de energía y optimización de la batería).
+    - Habilita y configura servicios del sistema como `gnome-keyring-daemon` (para gestión de contraseñas), `keyd` y `logiops` (para teclados y ratones avanzados), `teamviewer` y `tlp` (para la gestión avanzada de energía y optimización de la batería).
+    - **Nota:** La gestión de claves SSH ahora se realiza mediante el módulo `ssh-keyring.sh` usando `gcr-ssh-agent` (para GNOME 46+), no desde este módulo.
 
 #### 2.3. `zsh-config.sh`
 
@@ -133,12 +136,13 @@ Este módulo personaliza la experiencia del shell del usuario.
 
 - **Función Principal:** Configurar Zsh como el shell principal con una apariencia y funcionalidad mejoradas.
 - **Acciones Realizadas:**
-    - **Instalación:** Instala `zsh`, `zsh-completions` y otras utilidades.
+    - **Instalación:** Instala `zsh`, `zsh-completions`, `zsh-syntax-highlighting`, `zsh-autosuggestions` y dependencias (`unrar`, `p7zip`, `lsof`). Nota: `git`, `zoxide`, `fastfetch` y `yt-dlp` se instalan en el módulo `apps.sh` para evitar duplicidades.
     - **Oh My Zsh:** Instala el framework "Oh My Zsh" para la gestión de plugins.
     - **Plugins:** Añade plugins populares como `zsh-autosuggestions` (sugiere comandos mientras escribes) y `zsh-syntax-highlighting` (colorea la sintaxis de los comandos).
     - **Oh My Posh:** Instala esta herramienta para crear un prompt de terminal altamente personalizable y descarga un tema predefinido (Catppuccin Frappe).
-    - **.zshrc:** Reemplaza el `~/.zshrc` del usuario por una versión pre-configurada que integra todas estas herramientas y añade alias y funciones útiles, incluyendo una función `zsh_help` que muestra una lista de todos los comandos personalizados.
+    - **.zshrc:** Reemplaza el `~/.zshrc` del usuario por una versión pre-configurada que integra todas estas herramientas y añade alias y funciones útiles, incluyendo una función `zsh_help` que muestra una lista de todos los comandos personalizados. Si no se puede crear backup, continúa de todas formas.
     - **Shell por Defecto:** Cambia el shell de inicio de sesión del usuario a Zsh.
+    - **Integración con .bashrc:** Configura `.bashrc` para ejecutar `exec zsh` automáticamente al iniciar una terminal interactiva.
 
 #### 2.4. `docker.sh`
 
@@ -234,11 +238,13 @@ Instala una herramienta de VPN.
 
 ## 📝 Notas Importantes
 
-- **Dotfiles**: Este script ahora es **opinionated**. Si no encuentra `mg_dotfiles` en la ruta configurada en `common.sh`, los módulos de Zsh e Hyprland fallarán.
+- **Dotfiles**: Este script ahora es **opinionated**. Si no encuentra `mg_dotfiles` en la ruta configurada en `common.sh`, el script mostrará una advertencia y los módulos de Zsh e Hyprland fallarán.
+- **Verificación de mg_dotfiles**: Al iniciar el script, se verifica que `mg_dotfiles` existe en la ruta esperada (`~/Work/code/mg_dotfiles`). Si no se encuentra, se mostrarán instrucciones para clonarlo.
 - **Neovim**: La configuración personalizada de Neovim está disponible en `mg_dotfiles/nvim/`. No se instala automáticamente, pero puede vincularse manualmente con `ln -s ~/Work/code/mg_dotfiles/nvim ~/.config/nvim`.
 - **Fuentes**: Es imprescindible usar una **Nerd Font** (ej: `CaskaydiaMono NF` o `ttf-firacode-nerd`) para que los iconos de la terminal y Hyprland se visualicen correctamente.
 - **Reinicio**: Tras la instalación de Docker o el cambio de Shell, es necesario **cerrar sesión** para aplicar los cambios de grupos y entorno.
 - **Logs**: Cada ejecución genera un log en `logs/omarchy-setup-YYYY-MM-DD_HH-MM-SS.log`
+- **SSH Keyring**: A partir de GNOME 46+, la funcionalidad SSH fue movida a `gcr`, por lo que la gestión de claves SSH ahora usa `gcr-ssh-agent` en lugar del componente SSH de `gnome-keyring`.
 
 ## 🛠️ Desarrollo
 
