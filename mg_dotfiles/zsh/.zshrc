@@ -151,6 +151,10 @@ alias ni='npm install'
 alias nid='npm install --save-dev'
 alias nig='npm install -g'
 
+# OpenCode Web
+alias ocw='nohup opencode web > /dev/null 2>&1 & echo "🚀 OpenCode Web iniciado en background"'
+alias ocws='pkill -f "opencode web" && echo "🛑 OpenCode Web detenido" || echo "❌ No se encontró proceso de OpenCode Web"'
+
 # Python
 alias py='python'
 alias pir='pip install -r requirements.txt'
