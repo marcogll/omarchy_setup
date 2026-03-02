@@ -3,6 +3,9 @@
 # ssh-keyring.sh - Sincronizar claves SSH con gcr-ssh-agent
 # ===============================================================
 
+# --- Dependencias del Módulo ---
+MODULE_DEPS=("apps")
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/common.sh"
 
